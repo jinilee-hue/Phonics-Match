@@ -1,0 +1,14 @@
+node_modules
+dist
+.DS_Store
+*.log
+.vite
+__pycache__
+.qa/
+design/work/
+# reference pictures and full-size originals: the game doesn't load them (kept local only)
+design/ref_*
+design/*.png
+design/*.mp4
+# Office lock files
+~$*

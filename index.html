@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#9fdcf2" />
+  <title>Phonics Match</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='16' fill='%23f7e3da'/%3E%3Ctext x='32' y='45' font-family='Arial' font-weight='900' font-size='36' text-anchor='middle' fill='%23f2558c'%3Em%3C/text%3E%3C/svg%3E" />
+  <link rel="preload" href="./art/bg_title.webp" as="image" />
+</head>
+<body>
+  <div id="app" class="app" data-screen="title">
+    <!-- full-window backgrounds (cover); the design stage below is 2752×1536 and scaled to fit (ui/stage.ts) -->
+    <div class="bg bg-title" aria-hidden="true"></div>
+    <div class="bg bg-game" aria-hidden="true"></div>
+
+    <!-- ── play stage (design px) ──────────────────────────────────────────────────────────────────────── -->
+    <div id="stage" class="stage">
+      <!-- title -->
+      <section id="title" class="title">
+        <div class="orbit back" aria-hidden="true"></div>
+        <h1 class="logo"><img src="./art/logo.webp" alt="Phonics Match" draggable="false" /></h1>
+        <div class="orbit front" aria-hidden="true"></div>
+        <button id="btnPlay" class="play-btn" aria-label="Play"><img src="./art/play.webp" alt="" draggable="false" /></button>
+      </section>
+
+      <!-- game -->
+      <section id="game" class="game">
+        <div id="board" class="board" aria-label="board">
+          <div class="field">
+            <div class="slots"></div>
+            <div class="pieces"></div>
+          </div>
+        </div>
+        <!-- what the tutor just read: picture + word; the microphone listens under it -->
+        <div id="sayCard" class="say-card" hidden>
+          <div class="sc-face"><img alt="" draggable="false" /></div>
+          <div class="sc-word"><b class="sc-l"></b><span class="sc-rest"></span></div>
+          <div class="sc-mic"><i class="ring"></i><svg viewBox="0 0 24 24"><rect x="8.6" y="2.8" width="6.8" height="11.6" rx="3.4" /><path d="M5.4 11.2a6.6 6.6 0 0 0 13.2 0M12 17.8v3.4" /></svg></div>
+          <svg class="sc-ok" viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19.5 7" /></svg>
+        </div>
+      </section>
+
+      <canvas id="fx" class="fx" aria-hidden="true"></canvas>
+      <div id="fxDom" class="fx-dom" aria-hidden="true"></div>
+    </div>
+
+    <!-- ── HUD (top-anchored, same scale) ───────────────────────────────────────────────────────────────── -->
+    <div id="hud" class="hud">
+      <div class="hud-game">
+        <img class="hud-logo" src="./art/logo.webp" alt="Phonics Match" draggable="false" />
+        <!-- the left column: coins · dress up · the mission card, one block centred on the window height (.lcol) -->
+        <div class="lcol">
+        <div class="panel p-coin">
+          <div class="coin-track"><img class="coin-ico" src="./art/coin.webp" alt="" draggable="false" /><b id="coinNum">0</b></div>
+        </div>
+        <!-- dress up, next to the coins (the title's is the round button on the tutor) -->
+        <button class="dress-box" id="btnDressGame" aria-label="Dress up"><svg viewBox="0 0 24 24"><path d="M12 6.2a1.9 1.9 0 1 1 1.9-1.9c0 1-.8 1.5-1.9 2.1v1.4l8.6 5.9c.9.6.5 2-.6 2H4c-1.1 0-1.5-1.4-.6-2L12 7.8" /></svg></button>
+        <!-- the mission card beside the board: level progress · the Phonics Mission · moves left -->
+        <div class="mcard">
+          <div class="mc-row"><b class="lv-label">Level <span id="lvNum">1</span></b><div class="track"><i id="lvFill" class="fill"></i></div></div>
+          <i class="mc-sep"></i>
+          <b class="ms-label">Mission</b>
+          <div id="goals" class="goals"></div>
+          <i class="mc-sep"></i>
+          <div class="mc-row mc-moves"><b class="mv-label">Moves</b><b id="movesNum" class="mv-num">15</b></div>
+        </div>
+        </div><!-- /.lcol -->
+        <div class="game-bar">
+          <button id="btnLang" class="sq-btn lang-btn" aria-label="한글 영문">한글</button>
+          <button id="btnSoundGame" class="sq-btn line sound-btn" aria-label="음소거" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4.4 9.4h3.3l4.5-3.9v13l-4.5-3.9H4.4z" /><path class="waves" d="M15.4 8.9a4.4 4.4 0 0 1 0 6.2M18 6.4a8 8 0 0 1 0 11.2" /><path class="mute-x" d="M15.6 9.7l4.6 4.6M20.2 9.7l-4.6 4.6" /></svg></button>
+          <button id="btnExitGame" class="sq-btn line" aria-label="Exit"><svg viewBox="0 0 24 24"><path d="M13.4 4.4H7.2A1.8 1.8 0 0 0 5.4 6.2v11.6a1.8 1.8 0 0 0 1.8 1.8h6.2" /><path d="M10.6 12h9.2M16.6 8.6 20 12l-3.4 3.4" /></svg></button>
+        </div>
+      </div>
+      <div class="hud-title">
+        <!-- sound · exit (ui/corner.ts); dress up is the round button on the tutor (main.ts) -->
+        <div class="title-bar">
+          <button id="btnSound" class="sq-btn line sound-btn" aria-label="음소거" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M4.4 9.4h3.3l4.5-3.9v13l-4.5-3.9H4.4z" /><path class="waves" d="M15.4 8.9a4.4 4.4 0 0 1 0 6.2M18 6.4a8 8 0 0 1 0 11.2" /><path class="mute-x" d="M15.6 9.7l4.6 4.6M20.2 9.7l-4.6 4.6" /></svg></button>
+          <button id="btnExit" class="sq-btn line" aria-label="Exit"><svg viewBox="0 0 24 24"><path d="M13.4 4.4H7.2A1.8 1.8 0 0 0 5.4 6.2v11.6a1.8 1.8 0 0 0 1.8 1.8h6.2" /><path d="M10.6 12h9.2M16.6 8.6 20 12l-3.4 3.4" /></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── overlays (scaled like the stage) ─────────────────────────────────────────────────────────────── -->
+    <div id="over" class="over">
+      <!-- mission intro -->
+      <div id="intro" class="pop-card intro" hidden>
+        <b class="pc-title">Level <span class="in-lv">1</span></b>
+        <b class="pc-sub">Phonics Mission</b>
+        <div class="in-goals"></div>
+      </div>
+      <!-- pause -->
+      <div id="pause" class="pop-card menu" hidden>
+        <b class="pc-title">Pause</b>
+        <div class="pc-btns col">
+          <button class="pill-btn green" data-act="resume"><svg viewBox="0 0 24 24"><path class="solid" d="M8.4 5.4 18.2 12 8.4 18.6z" /></svg><span>Play</span></button>
+          <button class="pill-btn sky" data-act="restart"><svg viewBox="0 0 24 24"><path d="M19.4 7.3A8.6 8.6 0 1 0 20.4 13" /><path d="M15.5 7.5h4.3V3.2" /></svg><span>Restart</span></button>
+          <button class="pill-btn lav" data-act="home"><svg viewBox="0 0 24 24"><path class="solid" d="M12 3.6 3.8 10.8V20h6.2v-5.4h4V20h6.2V10.8z" /></svg><span>Home</span></button>
+        </div>
+      </div>
+      <!-- settings -->
+      <div id="settings" class="pop-card menu" hidden>
+        <b class="pc-title">Settings</b>
+        <div class="set-row">
+          <svg class="set-ico" viewBox="0 0 24 24"><path class="solid" d="M4 9.2h3.6L12.4 5v14l-4.8-4.2H4z" /><path d="M15.6 8.6a4.8 4.8 0 0 1 0 6.8M18.3 6a8.6 8.6 0 0 1 0 12" /></svg>
+          <input id="vol" class="vol" type="range" min="0" max="100" step="1" value="100" aria-label="Volume" />
+        </div>
+        <div class="set-row">
+          <svg class="set-ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6" /><path d="M3.6 12h16.8M12 3.4c2.6 2.4 3.6 5.4 3.6 8.6s-1 6.2-3.6 8.6c-2.6-2.4-3.6-5.4-3.6-8.6s1-6.2 3.6-8.6z" /></svg>
+          <div class="seg" role="radiogroup" aria-label="Tutor language">
+            <button data-l="ko" role="radio">한국어</button><button data-l="en" role="radio">English</button>
+          </div>
+        </div>
+        <div class="pc-btns"><button class="pill-btn green" data-act="close"><svg viewBox="0 0 24 24"><path d="M5 12.5 10 17.5 19.5 7" /></svg><span>OK</span></button></div>
+      </div>
+      <!-- the theme card: PLAY opens it (user: "타이틀에서 테마 선택 (동물 · 사물 · 과일)") -->
+      <div id="themes" class="pop-card themes" hidden>
+        <button class="round-btn close" data-act="close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" /></svg></button>
+        <b class="pc-title">Let's play!</b>
+        <div class="th-row">
+          <button class="th-btn" data-theme="animals"><span class="th-pic"><img src="./art/a_monkey.webp" alt="" draggable="false" /></span><b>Animals</b></button>
+          <button class="th-btn" data-theme="objects"><span class="th-pic"><img src="./art/o_mug.webp" alt="" draggable="false" /></span><b>Things</b></button>
+          <button class="th-btn" data-theme="fruit"><span class="th-pic"><img src="./art/f_apple.webp" alt="" draggable="false" /></span><b>Fruits</b></button>
+        </div>
+      </div>
+      <!-- level result -->
+      <div id="result" class="pop-card result" hidden>
+        <div class="rs-stars"><i></i><i></i><i></i></div>
+        <b class="pc-title rs-title">Mission Clear!</b>
+        <div class="rs-coins"><img class="coin-ico" src="./art/coin.webp" alt="" draggable="false" /><b class="rs-n">+0</b></div>
+        <div class="pc-btns">
+          <button class="pill-btn lav" data-act="home"><svg viewBox="0 0 24 24"><path class="solid" d="M12 3.6 3.8 10.8V20h6.2v-5.4h4V20h6.2V10.8z" /></svg></button>
+          <button class="pill-btn orange" data-act="shop" aria-label="Dress up"><svg viewBox="0 0 24 24"><path d="M12 6.2a1.9 1.9 0 1 1 1.9-1.9c0 1-.8 1.5-1.9 2.1v1.4l8.6 5.9c.9.6.5 2-.6 2H4c-1.1 0-1.5-1.4-.6-2L12 7.8" /></svg></button>
+          <button class="pill-btn sky rs-retry" data-act="retry"><svg viewBox="0 0 24 24"><path d="M19.4 7.3A8.6 8.6 0 1 0 20.4 13" /><path d="M15.5 7.5h4.3V3.2" /></svg><span>Retry</span></button>
+          <button class="pill-btn green rs-next" data-act="next"><span>Next</span><svg viewBox="0 0 24 24"><path d="M9.6 7.4 16.8 12l-7.2 4.6z" fill="#fff" stroke-width="3.8" /></svg></button>
+        </div>
+      </div>
+      <!-- shop: dress the tutor -->
+      <div id="shop" class="shop" hidden>
+        <div class="shop-card">
+          <div class="shop-stage"><div class="shop-tutor-spot"></div></div>
+          <div class="shop-side">
+            <div class="shop-head">
+              <b class="pc-title">Dress Up</b>
+              <div class="coin-pill small"><img class="coin-ico" src="./art/coin.webp" alt="" draggable="false" /><b id="coinNumS">0</b></div>
+            </div>
+            <div id="shopGrid" class="shop-grid"></div>
+          </div>
+          <button id="shopClose" class="round-btn close" aria-label="Close"><svg viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" /></svg></button>
+        </div>
+      </div>
+    </div>
+
+    <div id="rotate" class="rotate-hint" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6.5" y="3" width="11" height="18" rx="2.4" /><path d="M20.6 9.5a8.4 8.4 0 0 1-2.4 8" /><path d="M20.9 15.2l-2.6 2.6-1.4-3.4" /></svg></div>
+    <div id="loading" class="loading"><i></i></div>
+  </div>
+
+  <script type="module" src="./src/main.ts"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phonics Match · 3D 튜터 (게임 삽입용)</title>
+<!-- The game's ?tutor=3d preview (user: "게임화면에 적용해서 볼께") loads this page in an iframe sized to the tutor's
+     660×680 art frame: transparent, no UI, the same src/app.js as index.html. The game posts { t3d: {…} } with
+     __t3d.set() keys (mouth 0..1 / null from its lip sync, cape, cap; since pass 6 also gloves, shoes: bool, and
+     drag: [dx, dy] = art px moved since the last message while a finger drags over the tutor, dragEnd: true on release).
+     This page answers parent.postMessage({ t3dPose: { front } }) at load and whenever `front` changes (not dragged and
+     within 3° of the picture angle; it eases back there ~1.2 s after dragEnd). The hidden buttons only satisfy app.js's
+     lookups.
+     Pass 7: { t3d: { worn: { head, face, neck, back, hands, feet } } } (the game's item ids, a missing slot = nothing there)
+     dresses it with the 3D pieces (head: gradcap crown party flowers bunny bow · face: glasses stars · neck: bowtie ·
+     back: cape · hands: gloves · feet: shoes); at load it posts parent.postMessage({ t3dItems: [...those ids] }) so the
+     game hides exactly those 2D pictures. ?top=N gives the canvas N art px of headroom above the 660×680 frame (the
+     crown, party hat and bunny ears reach above it): make the iframe 660×(680+N) and N px higher; same camera. -->
+<style>
+  html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: transparent; }
+  #box3d { position: absolute; inset: 0; }
+  #c3d { width: 100%; height: 100%; display: block; }
+  .ui { display: none; }
+</style>
+<script type="importmap">{ "imports": { "three": "./lib/three.module.js", "three/addons/": "./lib/addons/" } }</script>
+</head>
+<body>
+  <div id="box3d"><canvas id="c3d"></canvas></div>
+  <div class="ui"><span id="hint"></span><button id="bCape"></button><button id="bCap"></button><button id="bSpin"></button><button id="bTalk"></button><button id="bWave"></button><button id="bFront"></button></div>
+  <script type="module">
+    import './src/app.js';
+    addEventListener('message', (e) => { const o = e.data && e.data.t3d; if (o && window.__t3d) window.__t3d.set(o); });
+  </script>
+</body>
+</html>
