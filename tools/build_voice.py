@@ -406,7 +406,9 @@ for word, L, off in BOARD:
 
 voice = {'engine': 'edge', 'voice': VOICE} if ENGINE == 'edge' else {'engine': 'company-tts', 'voice': QWEN_VOICE}
 JSON_OUT.parent.mkdir(parents=True, exist_ok=True)
-JSON_OUT.write_text(json.dumps({**voice, 'clips': manifest, 'lines': TUTOR, 'lines_ko': {k: ko_show(v) for k, v in TUTOR_KO.items()}},
+# ver: a content version per file — core/audio.ts loads voice/<file>?v=<ver> (a re-recorded clip keeps its name; see tools/voice_ver.py)
+ver = {v[0]: hashlib.md5((OUT / v[0]).read_bytes()).hexdigest()[:8] for v in manifest.values()}
+JSON_OUT.write_text(json.dumps({**voice, 'clips': manifest, 'lines': TUTOR, 'lines_ko': {k: ko_show(v) for k, v in TUTOR_KO.items()}, 'ver': ver},
                                indent=0, ensure_ascii=False), encoding='utf-8')
 d = sorted((v[3], k) for k, v in manifest.items())
 size = sum((OUT / v[0]).stat().st_size for v in manifest.values())

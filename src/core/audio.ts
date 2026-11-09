@@ -5,6 +5,10 @@ import { lang } from './lang';
 
 type Clip = [file: string, start: number, gain: number, dur: number];
 const CLIPS = (voiceData as unknown as { clips: Record<string, Clip> }).clips;
+/** content version per clip file (tools/voice_ver.py): voice/<file>?v=<ver>, so a re-recorded clip — same file name — is
+ *  never played from the browser's cache (GitHub Pages caches public/ for 10 min; user: "안내 순서가 안맞는데", the old
+ *  theme line over the new card order right after a deploy) */
+const VER = (voiceData as unknown as { ver?: Record<string, string> }).ver ?? {};
 
 /** clip keys: 't:<line>' tutor lines (English; 'k:<line>' = the same line in Korean, picked by core/lang.ts),
  *  'w:<word>' words, 's:<letter>' letter sounds. Callers always use the 't:' key. */
@@ -74,7 +78,7 @@ export function loadClip(key: string): Promise<AudioBuffer | null> {
   const c = CLIPS[key];
   if (!c) return Promise.resolve(null);
   let p = buffers.get(key);
-  if (!p) { p = fetchDecode(`${base}voice/${c[0]}`); buffers.set(key, p); }
+  if (!p) { p = fetchDecode(`${base}voice/${c[0]}${VER[c[0]] ? `?v=${VER[c[0]]}` : ''}`); buffers.set(key, p); }
   return p;
 }
 export const preload = (keys: string[]) => Promise.all(keys.map(loadClip));
