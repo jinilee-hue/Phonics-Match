@@ -2,7 +2,7 @@
 // On-device speech recognition (transformers.js on ONNX Runtime WASM). The child's audio only ever lives in this
 // worker's memory for one utterance: nothing is stored or sent anywhere. Model + runtime files come from our own site.
 import { env, pipeline } from '@huggingface/transformers';
-import { checkReading, type AsrParts } from './sttCheck.ts';
+import { checkReading, checkSaid, type AsrParts } from './sttCheck.ts';
 
 type Load = { type: 'load'; base: string; model: string };
 type Run = { type: 'run'; id: number; audio: Float32Array };
@@ -55,7 +55,7 @@ self.onmessage = async (e: MessageEvent<Load | Run | Check>) => {
       if (!asr) throw new Error('not loaded');
       const p = await asr;
       const t0 = performance.now();
-      const r = await checkReading(p, m.audio, m.target, m.alts, m.rivals);
+      const r = await checkSaid(p, m.audio, m.target, m.alts, m.rivals);
       post({ type: 'checked', id: m.id, r: { ...r, ms: Math.round(performance.now() - t0) } });
     } catch (err) {
       post({ type: 'checked', id: m.id, error: String(err) });

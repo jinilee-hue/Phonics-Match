@@ -323,6 +323,13 @@ img { -webkit-user-drag: none; }
 #sayCard { top: 347px; }   /* 123 up with the tutor (was .say-card's 470; user: "캐릭터와 단어 말풍선 조금 위로 올려줘") */
 #sayCard .sc-mic { left: auto; right: 1266px; top: 928px; bottom: auto; margin: 0; width: 200px; height: 200px; }   /* card top 347 + 928 = 1275: centre on 1375 */
 .demo-card .sc-mic { left: 330px; top: 694px; bottom: auto; margin: 0; width: 200px; height: 200px; }
+/* skip the saying (user: "단어 말 안해도 그냥 넘어갈때가 있는지 확인해 그리고 말하기 버튼 스킵할수 있게 하는게 나은지도 확인해" → "수정해"): a round lavender button beside the mic on the board's bottom edge
+   (centre 1594, 1375: 44 px past the mic's ring), there for the whole say turn, gone once it's right; scale/opacity for
+   in/out so .round-btn's :active press (transform) still works */
+#sayCard .sc-skip { position: absolute; right: 1080px; top: 962px; width: 132px; height: 132px; padding: 0; z-index: 1;
+  opacity: 0; scale: .4; pointer-events: none; transition: opacity .2s, scale .3s cubic-bezier(.2, 1.6, .4, 1), transform .12s ease; }
+#sayCard.can-skip .sc-skip { opacity: 1; scale: 1; pointer-events: auto; }
+#sayCard.ok .sc-skip { opacity: 0; scale: .4; pointer-events: none; }
 
 /* the title's how-to-play demo (ui/demo.ts; user: "인트로 구성할때 실제 게임하는 내용도 좀 보여주며 설명하는게 어때?" → "왼쪽에
    작게 넣지말고 로고랑 play 버튼 밑에서 나오는게 나을거 같은데"): while it plays, the logo and PLAY move up and shrink

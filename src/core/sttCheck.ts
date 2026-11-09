@@ -8,19 +8,24 @@
 //   (c) nothing:                               sT   = log P(target) must not be tiny      → not a cough or chatter
 //   (d) whisper's own no-speech guess must be low (music / noise: ≥ 0.44; accepted readings: 99% under 0.34)
 // Rivals starting with b are not held against the child: a Korean speaker's word-initial m is often half a b
-// (denasalised), and it is the same lip sound. Thresholds from tools/qa/stt_grid.py (28 words × 7 voices × 4 rooms):
-// correct readings 89% per try (child / adult English voices 89-99%, strongly Korean-accented 74-87%) vs 46% for the
-// transcript alone; the same word with another first sound passes 11-13%, other words 4%, Korean chatter 9%,
-// music / noise 0%. Leaning to "pass": after 3 real tries the turn passes anyway ("Good try!").
-// whisper-base.en (77 MB vs 41 MB) did no better on this set.
+// (denasalised), and it is the same lip sound.
+// Thresholds: Phonics Match re-tune (user: "단어 말 안해도 그냥 넘어갈때가 있는지 확인해" → "수정해") — Jenga's rule (gap 8,
+// minT -10) paid coins for 20% of sounds that are not the word (the tutor's Korean lines 43%, Korean chatter 31%, other
+// words 27%, music 17%). tools/qa/stt_set.py → stt_eval.ts → stt_grid.py (48 words × 7 voices × 3 rooms + chants +
+// the official recordings, vs 534 wrong sounds): gap 6 / minT -7.5 → wrong passes 4% per try (speech played backwards
+// 17%, Korean chatter 6%, other words 6%, music / noise 0%), correct readings 87% (English child / adult voices
+// 93-100%, official recordings + chants 100% with checkSaid's second look, strongly Korean-accented 66-68% — was
+// 85-90%). Two tries a turn, then "Good try!" with no coins; the say card has a skip button.
+// whisper-base.en (77 MB vs 41 MB) did no better on Jenga's set.
 //
 // Speed: the audio is encoded once; one decoder pass for the prompt caches the audio side, the free transcript is a
 // greedy decode on that cache, and each candidate word costs ONE more short pass (its ".", "!", end-of-text endings
 // all come from the same next-token distribution).
 import { Tensor } from '@huggingface/transformers';
 import { exactReading } from './readCheck.ts';
+import { lastPart } from './lastPart.ts';
 
-export const RULE = { gap: 8, rgap: 2, minT: -10, maxNo: 0.5, freeOnsets: 'b' };
+export const RULE = { gap: 6, rgap: 2, minT: -7.5, maxNo: 0.5, freeOnsets: 'b' };
 
 /** the parts of a transformers.js ASR pipeline this needs */
 export interface AsrParts {
@@ -127,4 +132,17 @@ export async function checkReading(p: AsrParts, audio: Float32Array, target: str
   const gap = sFree - sT, rgap = rival ? best - sT : -99;
   const ok = exact || (gap < rule.gap && rgap < rule.rgap && sT > rule.minT && pNo < rule.maxNo);
   return { text, ok, exact, gap: +gap.toFixed(2), rgap: +rgap.toFixed(2), rival, sT: +sT.toFixed(2), sFree: +sFree.toFixed(2), pNo: +pNo.toFixed(3), rv };
+}
+
+/** checkReading, and when the whole doesn't pass, a second look at its last part (core/lastPart.ts) — that one counts
+ *  only if the word itself is heard exactly: a child repeating the whole "/l/ /l/ lion" chant reads as "O, O, O…"
+ *  whole (the official chants of lion / lemon failed the stricter rule), while the parts of chatter rarely come out
+ *  as the exact word (tools/qa/stt_tail.ts: an any-pass second look let 4 more Korean lines through, exact-only none) */
+export async function checkSaid(p: AsrParts, audio: Float32Array, target: string, alts: string[], rivals: string[], rule = RULE): Promise<Reading> {
+  const r = await checkReading(p, audio, target, alts, rivals, rule);
+  if (r.ok) return r;
+  const tail = lastPart(audio);
+  if (!tail) return r;
+  const t = await checkReading(p, tail, target, alts, rivals, rule);
+  return t.exact || alts.some((a) => exactReading(a, t.text)) ? { ...t, ok: true } : r;
 }

@@ -48,7 +48,8 @@ export class Game {
     this.grid = new Grid(BW, BH, ANIMALS.length, () => this.rnd());
     this.board = new Board($('#board'), this.grid);
     this.board.onSwap = (a, b) => { void this.swap(a, b); };
-    this.board.onTouch = () => { this.poke(); if (this.state === 'listen') this.listenAbort = true; };
+    this.board.onTouch = () => { this.poke(); };
+    this.card.querySelector('.sc-skip')?.addEventListener('click', (e) => { e.stopPropagation(); this.skipSay(); });
     // the say card's letter jumps on each letter sound
     onLineTimes((times, now) => {
       for (const t of times) if (t.key.startsWith('s:')) setTimeout(() => this.beat(), Math.max(0, (t.at - now) * 1000 + 60));
@@ -135,8 +136,7 @@ export class Game {
     }
     // the child's turn to say it (also after the last move — then the result)
     if (focus >= 0) {
-      this.state = won || lost ? 'over' : 'listen';
-      if (!won && !lost) { this.board.locked = false; this.armHint(14000); }
+      this.state = won || lost ? 'over' : 'listen';   // the board stays locked: say it or skip (a touch used to end the turn)
       await this.sayItTurn(focus, s);
       // a newer move (the child swapped while the microphone listened) owns the board now
       if (!this.alive(s) || mv !== this.moveSeq) return;
@@ -237,21 +237,27 @@ export class Game {
     return say([react, 0.25, `s:${a.letter}`, 0.32, `s:${a.letter}`, 0.4, `w:${a.word}`]);
   }
 
-  /** "따라 해 봐!" → listen → bonus coins. Two tries; silence just closes the card. */
+  /** "따라 해 봐!" → listen → bonus coins. The child says it or taps the card's skip button (user: "단어 말 안해도 그냥 넘어갈때가 있는지 확인해 그리고 말하기 버튼 스킵할수 있게 하는게 나은지도 확인해" → "수정해"):
+   *  silence no longer closes the card after 5 s — the tutor reads it again and waits once more (~20 s in all), and the
+   *  board stays locked meanwhile (a touch used to end the turn); two wrong tries end it kindly ("Good try!"); no
+   *  microphone ends it at once. No coins without the word. */
   private async sayItTurn(k: number, s: number) {
     const a = ANIMALS[k];
     if (this.card.hidden) this.showCard(k);
     this.listenAbort = false;
+    this.card.classList.add('can-skip');
     const teach = this.n === 1 && !played1() && !this.taught;
     this.taught = true;
-    for (let tries = 0; tries < 2; tries++) {
-      await say([tries === 0 && teach ? 't:howto2' : 't:sayit']);
+    let misses = 0, quiet = 0;
+    for (let round = 0; round < 6; round++) {
+      await this.sayTurn([round === 0 && teach ? 't:howto2' : 't:sayit']);
       if (!this.alive(s) || this.listenAbort) break;
       this.card.classList.add('listen');
       const ring = this.card.querySelector('.sc-mic .ring') as HTMLElement;
       let asked = false;
       const r: Heard = await this.listener.hear(a.word, {
         alts: ALTS[a.word] ?? [], rivals: rivalsOf(a.word),
+        waitMs: quiet ? 9000 : 6000,
         aborted: () => this.listenAbort || !this.alive(s),
         onState: (st) => { this.card.classList.toggle('think', st === 'thinking'); if (st === 'voice') this.tutor.eyes('', 0); },
         onLevel: (v) => ring.style.setProperty('--lv', (1 + v * 0.5).toFixed(3)),
@@ -259,19 +265,36 @@ export class Game {
       });
       this.card.classList.remove('listen', 'think');
       this.hooks.log?.(`heard ${a.word}: ${r} ${this.listener.lastHeard ?? ''}`);
-      if (!this.alive(s) || r === 'aborted') break;
-      if (r === 'ok') { await this.bonus(s); break; }
-      if (r === 'miss' && tries === 0) {
+      if (!this.alive(s) || r === 'aborted' || r === 'nomic') break;
+      if (r === 'ok') { this.card.classList.remove('can-skip'); await this.bonus(s); break; }
+      if (r === 'miss') {
         this.tutor.act('nod');
-        await say(['t:almost', 0.25, `s:${a.letter}`, 0.3, `s:${a.letter}`, 0.4, `w:${a.word}`]);
-        if (!this.alive(s) || this.listenAbort) break;
-        continue;
+        if (++misses >= 2) { await this.sayTurn(['t:goodtry']); break; }
+        await this.sayTurn(['t:almost', 0.25, `s:${a.letter}`, 0.3, `s:${a.letter}`, 0.4, `w:${a.word}`]);
+      } else {
+        // silence: the tutor reads it again and waits once more; quiet again → on, without coins
+        if (++quiet >= 2) break;
+        this.tutor.act('bounce');
+        await this.sayTurn([`s:${a.letter}`, 0.3, `s:${a.letter}`, 0.4, `w:${a.word}`]);
       }
-      if (r === 'miss') { this.tutor.act('nod'); await say(['t:goodtry']); }
-      break;
+      if (!this.alive(s) || this.listenAbort) break;
     }
+    this.card.classList.remove('can-skip');
     this.listener.close();
     if (this.alive(s)) this.hideCard();
+  }
+
+  /** a tutor line inside the say turn — the skip button cuts it short (say() itself waits out the line's length) */
+  private sayTurn(parts: Parameters<typeof say>[0]) {
+    if (this.listenAbort) return Promise.resolve(false);
+    return Promise.race([say(parts), new Promise<boolean>((r) => { this.skipped = () => r(false); })]);
+  }
+  private skipped: (() => void) | null = null;
+  /** the say card's skip button: no coins, the board is back at once */
+  skipSay() {
+    if (this.card.hidden || !this.card.classList.contains('can-skip')) return;
+    sfx('tap'); this.listenAbort = true; stopSpeech();
+    this.skipped?.(); this.skipped = null;
   }
 
   private async bonus(s: number) {

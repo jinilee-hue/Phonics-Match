@@ -8,6 +8,8 @@ import { exactReading } from './readCheck';
 export type Heard = 'ok' | 'miss' | 'silence' | 'nomic' | 'aborted';
 export interface HearOpts {
   alts: string[]; rivals: string[];
+  /** how long to wait for a voice before 'silence' (ms, default 5000) */
+  waitMs?: number;
   aborted: () => boolean;
   onState?: (s: 'waiting' | 'voice' | 'thinking') => void;
   onLevel?: (v: number) => void;
@@ -50,7 +52,7 @@ export class Listener {
     holdMusic(true);
     try {
       const r = await this.mic.listen({
-        startTimeoutMs: 5000, maxMs: 4500, endSilenceMs: 750, guardMs: 280,
+        startTimeoutMs: o.waitMs ?? 5000, maxMs: 4500, endSilenceMs: 750, guardMs: 280,
         onState: (st) => { if (st === 'waiting') { o.onState?.('waiting'); sfx('listen'); } else o.onState?.('voice'); },
         onLevel: (v) => o.onLevel?.(v),
         aborted: o.aborted,
@@ -60,8 +62,15 @@ export class Listener {
       if (r.kind === 'aborted') return 'aborted';
       if (r.kind === 'silence') return 'silence';
       o.onState?.('thinking');
-      if (sttState() === 'loading') await sttWhenReady(6000);
-      if (sttState() !== 'ready') return 'ok';            // no recogniser on this device: a clear voice was heard
+      // still downloading: wait for it (≤ 30 s, the mic shows 'thinking') — passing any voice meanwhile paid coins for no
+      // word (user: "단어 말 안해도 그냥 넘어갈때가 있는지 확인해"); still not there → no coins, and no "wrong" either
+      const tw = performance.now();
+      while (sttState() === 'loading' && performance.now() - tw < 30000) {
+        if (o.aborted()) return 'aborted';
+        await sttWhenReady(250);
+      }
+      if (sttState() === 'loading') return 'nomic';
+      if (sttState() !== 'ready') return 'ok';            // no recogniser on this device at all: a clear voice was heard
       const out = await check(await prepareForStt(r.pcm, r.sr), word, o.alts, o.rivals);
       if (!out) return 'ok';
       this.lastHeard = out.text;

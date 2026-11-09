@@ -58,6 +58,9 @@ async function boot() {
   const demo = new Demo($('#title'), fx, tutor, title);
   hud.coins(save.coins);
   void preloadImages(THEME_IDS.flatMap((t) => allOf(t)).map((a) => `${base}${a.img}`));   // every theme's pictures: the board changes per unit / level / theme
+  // the speech recogniser (~29 MB) starts downloading on the title, not on PLAY, so the first say-it turns don't meet it
+  // still loading (it waits for it then; any voice used to pass meanwhile)
+  setTimeout(() => sttPreload(), 1500);
 
   const place = (where: keyof typeof SPOT, instant = false) => { const [x, y, s] = SPOT[where]; tutor.place(x, y, s, instant); };
   place('title', true);

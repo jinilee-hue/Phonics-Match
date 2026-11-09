@@ -8,7 +8,7 @@ import { env, pipeline } from '@huggingface/transformers';
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { checkReading, type AsrParts } from '../../src/core/sttCheck.ts';
+import { checkSaid as checkReading, type AsrParts } from '../../src/core/sttCheck.ts';   // the game's check (with its second look)
 import { ALTS, ANIMALS, PER_UNIT, UNITS, animalTurn, rivalsOf, setTheme, useLevelAnimals, type Theme } from '../../src/data/animals.ts';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
