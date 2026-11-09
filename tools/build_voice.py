@@ -85,7 +85,7 @@ TUTOR = {
     'poor': 'Say more words to get coins!',
     'look': 'How do I look?',
     'micask': 'Tap allow, so I can hear you!',
-    'theme': 'Animals, things, or fruits? Pick one!',   # the theme card's guide ("테마 고르고 나서 play 버튼 있어야 하는거 아냐?그리고 안내도 해야지. 테마를 고를수 있다는")
+    'theme': 'Animals, fruits, or things? Pick one!',   # the theme card's guide, in its order (left to right) ("테마 고르고 나서 play 버튼 있어야 하는거 아냐?그리고 안내도 해야지. 테마를 고를수 있다는")
     'jump': 'Want to skip? Tap the jump button!',   # the jump button's guide ("점프하고 싶으면 점프버튼 눌러야 하는 안내 가이드도 있으면 좋을거 같은데..")
 }
 # Korean (the default — the user's concept video narrates in Korean: "친구들 안녕! … 와우! 피그! 따라해봐 피그!").
@@ -120,7 +120,7 @@ TUTOR_KO = {
     'look': '나 어때?',
     'micask': '허용 버튼을 눌러 줘! 그래야 내가 들을 수 있어!',
     'jump': '넘어가고 싶으면 점프 버튼을 눌러!',
-    'theme': '동물, 사물, 과일 중에 하나를 골라 봐!',
+    'theme': '동물, 과일, 사물 중에 하나를 골라 봐!',
     'wow': '와우!',
     'nice': '좋아!',
 }

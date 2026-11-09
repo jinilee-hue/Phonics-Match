@@ -22,8 +22,9 @@ const params = new URLSearchParams(location.search);
 const base = new URL('./', location.href).href;
 /** when the three theme names start in the tutor's "pick one" line (s after the line starts; measured on
  *  public/voice/{k,t}_theme.mp3 — re-measure if the line is rebuilt) */
-const THEME_BEATS: Record<string, number[]> = { ko: [0, 0.85, 1.58], en: [0, 0.92, 2.0] };   // names at ko 0.11 / 0.95 / 1.68 s,
-// en 0.11 / 1.02 / 2.10 s; each hop starts 0.1 s before so it is up as the name is said (scratch pm/theme_beats.py)
+const THEME_BEATS: Record<string, number[]> = { ko: [0, 0.58, 1.12], en: [0, 0.54, 1.02] };   // the card's order (animals ·
+// fruits · things): names at ko 0.11 / 0.68 / 1.22 s, en 0.11 / 0.64 / 1.12 s; each hop starts 0.1 s before so it is up
+// as the name is said (scratch pm/theme_beats.py, pm/theme_words.py)
 const app = $('#app');
 
 // where the tutor stands (stage px of its art's top-left, scale): the mockups' spots; on the title 150 lower and 30 left
@@ -135,7 +136,7 @@ async function boot() {
   // "동물, 사물, 과일 중에 하나를 골라 봐!" and each picture hops as its name is said; the first pick → "플레이 버튼을 눌러 봐!"
   // and Play pulses. The title's quiet demo waits while the card is up.
   const levelFor = (t: Theme) => (t === 'animals' ? save.level : save.levels?.[t] ?? 1);
-  let picked: Theme = theme, toldPlay = false;
+  let picked: Theme = 'animals', toldPlay = false;   // the card always opens on Animals (user: "동물이 처음 디폴트로 하고 과일을 가운데로 옮겨주고 플레이 버튼 앞에 세모는 모서리가 둥근 세모로 바꿔")
   const themeRow = $('#themes .th-row'), themeGo = $('#themes .th-go');
   const markPicked = () => document.querySelectorAll<HTMLElement>('#themes .th-btn').forEach((b) => b.classList.toggle('on', b.dataset.theme === picked));
   const hopThemes = () => { themeRow.classList.remove('guide'); void themeRow.offsetWidth; themeRow.classList.add('guide'); };
@@ -146,7 +147,7 @@ async function boot() {
     window.setTimeout(hopThemes, Math.max(0, (t.at - now) * 1000));
   });
   const openThemes = () => {
-    picked = theme; toldPlay = false; markPicked();
+    picked = 'animals'; toldPlay = false; markPicked();
     themeGo.classList.remove('call'); themeRow.classList.remove('guide');
     openCard('#themes');
     demo.stop();

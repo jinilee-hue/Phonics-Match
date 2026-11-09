@@ -431,7 +431,12 @@ img { -webkit-user-drag: none; }
   box-shadow: inset 0 -12px 0 var(--rim-side), 0 14px 22px rgba(105, 70, 70, .22); }
 .th-pic img { width: 84%; height: 84%; object-fit: contain; pointer-events: none; }
 .th-btn b { font-size: 70px; font-weight: 800; color: var(--ink); letter-spacing: -1px; }
-.th-btn.on .th-pic { box-shadow: 0 0 0 14px #ff9a1f, inset 0 -12px 0 var(--rim-side), 0 14px 22px rgba(105, 70, 70, .22); }
+/* the selection ring goes round the picture's face only (user: "선택 원이 그림자까지 포함해서 원 넣지말어"): round the whole disc it took in
+   the 12 px bottom rim — the button's "shadow" — so the face sat high inside it. The face is the disc minus the rim
+   (330 × 318, centre 6 px up): an ellipse 2 px inside its edge with a 16 px ring stays on the face everywhere (no rim or
+   background sliver inside) and covers the rim (scratch pm/ring_fit.py) */
+.th-pic { position: relative; }
+.th-btn.on .th-pic::after { content: ''; position: absolute; inset: 2px 2px 14px; border-radius: 50%; box-shadow: 0 0 0 16px #ff9a1f; pointer-events: none; }
 .themes .round-btn.close { position: absolute; right: -40px; top: -40px;   /* the dress-up orange (user: "x버튼 주황색으로 해줘") */
   background: linear-gradient(180deg, var(--dy-hi) 0%, var(--dy-mid) 55%, var(--dy-lo) 100%);
   box-shadow: 0 14px 22px rgba(105, 70, 70, .22), inset 0 -10px 0 var(--dy-rim), inset 0 8px 10px rgba(255, 255, 255, .55); }

@@ -173,8 +173,8 @@
 "t:theme": [
 "t_theme.mp3",
 0.03,
-1.012,
-4.026
+0.955,
+2.658
 ],
 "t:jump": [
 "t_jump.mp3",
@@ -371,8 +371,8 @@
 "k:theme": [
 "k_theme.mp3",
 0.02,
-0.967,
-3.628
+1.074,
+2.764
 ],
 "k:wow": [
 "k_wow.mp3",
@@ -992,7 +992,7 @@
 "poor": "Say more words to get coins!",
 "look": "How do I look?",
 "micask": "Tap allow, so I can hear you!",
-"theme": "Animals, things, or fruits? Pick one!",
+"theme": "Animals, fruits, or things? Pick one!",
 "jump": "Want to skip? Tap the jump button!",
 "wow": "Wow!",
 "nice": "Nice!"
@@ -1027,7 +1027,7 @@
 "look": "나 어때?",
 "micask": "허용 버튼을 눌러 줘! 그래야 내가 들을 수 있어!",
 "jump": "넘어가고 싶으면 점프 버튼을 눌러!",
-"theme": "동물, 사물, 과일 중에 하나를 골라 봐!",
+"theme": "동물, 과일, 사물 중에 하나를 골라 봐!",
 "wow": "와우!",
 "nice": "좋아!"
 }
