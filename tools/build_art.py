@@ -11,6 +11,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 from art_boxes import BOXES  # noqa: E402
 from matte import bleed, clean, dil, ero, gblur, refine, smoothstep, trim_box  # noqa: E402
 from membrane import membrane  # noqa: E402
+from letter_counters import NAMES as COUNTER_LETTERS, fix_file as cut_counter  # noqa: E402
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 D = ROOT / 'design'
@@ -120,6 +121,10 @@ def title_pieces():
     sprite('logo', 'logo')
     for n in ('l_m_red', 'l_m_blue', 'l_a_blue', 'l_t_top', 'l_p_top', 'l_t_bot', 'l_p_bot'):
         sprite(n, n)
+    # the A / P holes came out opaque with the mockup's background in them (cream / sky) and showed when the letters
+    # flew over other colours (user: "인트로에 움직이는 알파벳에 누끼 제대로 안따져서 배경 컬러 달라지면 표시나. p와 a 알파벳")
+    for n in COUNTER_LETTERS:
+        cut_counter(n, fresh=True)
     # PLAY: the matte only found the text, so the button is cut as its own stadium shape (orange pill + cream ring)
     T = Image.open(D / 'ref_title.png').convert('RGB')
     x0, y0, x1, y1 = 1029, 876, 1726, 1178
