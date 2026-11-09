@@ -266,7 +266,7 @@ export class Game {
         onAsk: () => { if (!asked) { asked = true; void say(['t:micask']); } },
       });
       this.card.classList.remove('listen', 'think');
-      this.hooks.log?.(`heard ${a.word}: ${r} ${this.listener.lastHeard ?? ''}`);
+      this.hooks.log?.(`heard ${a.word}: ${r} ${this.listener.lastHeard ?? ''}${this.listener.ignored.length ? ` · ignored: ${this.listener.ignored.join(' | ')}` : ''}`);
       if (!this.alive(s) || r === 'aborted' || r === 'nomic') break;
       if (r === 'ok') { this.card.classList.remove('can-skip'); await this.bonus(s); break; }
       if (r === 'miss') {
