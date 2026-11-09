@@ -3,7 +3,7 @@ import { audioCtx, setVolume, sfx, startMusic, unlock, voiceLevel, voiceNow } fr
 import { lang, onLang, setLang } from './core/lang';
 import { fakeMic } from './core/listen';
 import { micTest } from './core/mic';
-import { onTalk, said, say, stopSpeech } from './core/speech';
+import { onLineTimes, onTalk, said, say, stopSpeech } from './core/speech';
 import { sttPreload, sttState } from './core/stt';
 import { addCoins, commit, save } from './core/store';
 import { coinSrc, Game } from './game/game';
@@ -20,6 +20,10 @@ import { allOf, setTheme, theme, THEME_IDS, type Theme } from './data/animals';
 const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
 const params = new URLSearchParams(location.search);
 const base = new URL('./', location.href).href;
+/** when the three theme names start in the tutor's "pick one" line (s after the line starts; measured on
+ *  public/voice/{k,t}_theme.mp3 — re-measure if the line is rebuilt) */
+const THEME_BEATS: Record<string, number[]> = { ko: [0, 0.85, 1.58], en: [0, 0.92, 2.0] };   // names at ko 0.11 / 0.95 / 1.68 s,
+// en 0.11 / 1.02 / 2.10 s; each hop starts 0.1 s before so it is up as the name is said (scratch pm/theme_beats.py)
 const app = $('#app');
 
 // where the tutor stands (stage px of its art's top-left, scale): the mockups' spots; on the title 150 lower and 30 left
@@ -126,20 +130,44 @@ async function boot() {
   const cards = ['#intro', '#pause', '#settings', '#result', '#themes'];
   function closeCards() { cards.forEach((c) => { $(c).hidden = true; }); over.classList.remove('dim'); }
   const openCard = (sel: string) => { closeCards(); $(sel).hidden = false; $(sel).classList.remove('out'); over.classList.add('dim'); };
-  // the theme card (user: "타이틀에서 테마 선택 (동물 · 사물 · 과일)"): PLAY opens it; a picture starts that theme at its own level
+  // the theme card (user: "타이틀에서 테마 선택 (동물 · 사물 · 과일)" → "테마 고르고 나서 play 버튼 있어야 하는거 아냐?그리고 안내도 해야지. 테마를 고를수 있다는"): PLAY opens it; a picture only picks the theme (the
+  // orange ring moves, the picture pops) and the green Play starts it at its own level. As the card opens the tutor says
+  // "동물, 사물, 과일 중에 하나를 골라 봐!" and each picture hops as its name is said; the first pick → "플레이 버튼을 눌러 봐!"
+  // and Play pulses. The title's quiet demo waits while the card is up.
   const levelFor = (t: Theme) => (t === 'animals' ? save.level : save.levels?.[t] ?? 1);
+  let picked: Theme = theme, toldPlay = false;
+  const themeRow = $('#themes .th-row'), themeGo = $('#themes .th-go');
+  const markPicked = () => document.querySelectorAll<HTMLElement>('#themes .th-btn').forEach((b) => b.classList.toggle('on', b.dataset.theme === picked));
+  const hopThemes = () => { themeRow.classList.remove('guide'); void themeRow.offsetWidth; themeRow.classList.add('guide'); };
+  onLineTimes((times, now) => {
+    const t = times.find((x) => x.key === 't:theme');
+    if (!t || $('#themes').hidden) return;
+    (THEME_BEATS[lang()] ?? THEME_BEATS.en).forEach((s, i) => themeRow.style.setProperty(`--d${i + 1}`, `${s}s`));
+    window.setTimeout(hopThemes, Math.max(0, (t.at - now) * 1000));
+  });
   const openThemes = () => {
-    document.querySelectorAll<HTMLElement>('#themes .th-btn').forEach((b) => b.classList.toggle('on', b.dataset.theme === theme));
+    picked = theme; toldPlay = false; markPicked();
+    themeGo.classList.remove('call'); themeRow.classList.remove('guide');
     openCard('#themes');
+    demo.stop();
+    tutor.act('nod');
+    void say(['t:theme']);
   };
   $('#themes').addEventListener('click', (e) => {
     const el = e.target as Element;
-    if (el.closest('[data-act="close"]')) { sfx('tap'); closeCards(); return; }
+    if (el.closest('[data-act="close"]')) { sfx('tap'); stopSpeech(); closeCards(); if (app.dataset.screen === 'title') demo.start(); return; }
+    if (el.closest('[data-act="go"]')) {
+      sfx('start'); stopSpeech();
+      setTheme(picked); save.theme = picked; commit();
+      toGame(levelFor(picked));
+      return;
+    }
     const b = el.closest<HTMLElement>('.th-btn');
     if (!b) return;
-    const t = b.dataset.theme as Theme;
-    sfx('tap'); setTheme(t); save.theme = t; commit();
-    toGame(levelFor(t));
+    picked = b.dataset.theme as Theme;
+    sfx('tap'); markPicked(); themeRow.classList.remove('guide');
+    b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop');
+    if (!toldPlay) { toldPlay = true; themeGo.classList.add('call'); void say(['t:pressplay']); }
   });
   $('#pause').addEventListener('click', (e) => {
     const act = (e.target as Element).closest<HTMLElement>('[data-act]')?.dataset.act;

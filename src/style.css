@@ -436,6 +436,23 @@ img { -webkit-user-drag: none; }
   background: linear-gradient(180deg, var(--dy-hi) 0%, var(--dy-mid) 55%, var(--dy-lo) 100%);
   box-shadow: 0 14px 22px rgba(105, 70, 70, .22), inset 0 -10px 0 var(--dy-rim), inset 0 8px 10px rgba(255, 255, 255, .55); }
 .themes .round-btn.close svg { stroke: var(--dy-ink); filter: drop-shadow(0 -2px 0 rgba(255, 255, 255, .5)) drop-shadow(0 3px 2px var(--dy-sh)); }
+/* pick, then Play (user: "테마 고르고 나서 play 버튼 있어야 하는거 아냐?그리고 안내도 해야지. 테마를 고를수 있다는"): a picture only picks (ring + pop); the green Play under the row
+   starts that theme. Guide: the pictures hop in turn as the tutor names them (main.ts THEME_BEATS → --d1..3); after the
+   first pick Play pulses with a green ring (a white one, like the title PLAY's, vanished on the cream card) */
+.themes .pc-btns { margin-top: 64px; }
+.themes .th-go { position: relative; min-width: 560px; }   /* (.themes: .pill-btn's min-width comes later) */
+.th-row.guide .th-btn { animation: th-hop .6s cubic-bezier(.3, .7, .4, 1) both; }
+.th-row.guide .th-btn:nth-child(1) { animation-delay: var(--d1, 0s); }
+.th-row.guide .th-btn:nth-child(2) { animation-delay: var(--d2, .55s); }
+.th-row.guide .th-btn:nth-child(3) { animation-delay: var(--d3, 1.1s); }
+@keyframes th-hop { 0%, 100% { translate: 0 0; scale: 1; } 18% { translate: 0 6px; scale: 1.06 .94; } 50% { translate: 0 -46px; scale: .97 1.04; }
+  80% { translate: 0 0; scale: 1.05 .95; } }
+.th-btn.pop .th-pic { animation: th-pop .4s cubic-bezier(.2, 1.6, .4, 1); }
+@keyframes th-pop { 40% { scale: 1.1; } }
+.th-go.call { animation: go-pulse 1.6s ease-in-out infinite; }
+.th-go.call::after { content: ''; position: absolute; inset: 0; border-radius: 75px; pointer-events: none; animation: go-ring 1.6s ease-out infinite; }
+@keyframes go-pulse { 50% { scale: 1.05; } }
+@keyframes go-ring { 0% { box-shadow: 0 0 0 0 rgba(79, 191, 67, .55); } 100% { box-shadow: 0 0 0 40px rgba(79, 191, 67, 0); } }
 .pill-btn { height: 150px; min-width: 150px; padding: 0 56px; border-radius: 75px; display: inline-flex; align-items: center; justify-content: center; gap: 22px;
   color: #fff; font-size: 74px; font-weight: 800; letter-spacing: -1px; --b1: #8fe36a; --b2: #46b33d; --b3: #2f8f2c;
   background: linear-gradient(180deg, var(--b1), var(--b2)); box-shadow: inset 0 -12px 0 var(--b3), inset 0 8px 8px rgba(255, 255, 255, .45), 0 12px 18px rgba(60, 40, 50, .25);
