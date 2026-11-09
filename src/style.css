@@ -330,6 +330,10 @@ img { -webkit-user-drag: none; }
   opacity: 0; scale: .4; pointer-events: none; transition: opacity .2s, scale .3s cubic-bezier(.2, 1.6, .4, 1), transform .12s ease; }
 #sayCard.can-skip .sc-skip { opacity: 1; scale: 1; pointer-events: auto; }
 #sayCard.ok .sc-skip { opacity: 0; scale: .4; pointer-events: none; }
+/* green with the ▶▶| skip icon (user: "▶| 가 건너뛰기 아이콘이라고 보기 어려워. 그리고 컬러도 초록색 버튼으로 바꿔줘"): the game's green pills' colours, white line icon */
+#sayCard .sc-skip { background: linear-gradient(180deg, #a6ea6f, #4fbf43);
+  box-shadow: inset 0 -10px 0 #339132, inset 0 8px 8px rgba(255, 255, 255, .45), 0 12px 18px rgba(60, 40, 50, .25); }
+#sayCard .sc-skip svg { width: 62%; height: 62%; stroke: #fff; stroke-width: 2.6; filter: drop-shadow(0 3px 0 rgba(0, 0, 0, .15)); }
 
 /* the title's how-to-play demo (ui/demo.ts; user: "인트로 구성할때 실제 게임하는 내용도 좀 보여주며 설명하는게 어때?" → "왼쪽에
    작게 넣지말고 로고랑 play 버튼 밑에서 나오는게 나을거 같은데"): while it plays, the logo and PLAY move up and shrink
