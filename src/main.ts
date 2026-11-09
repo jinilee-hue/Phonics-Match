@@ -194,7 +194,9 @@ async function boot() {
   onLang(paintLang);
   paintLang();
   langBtn.addEventListener('click', () => {
-    unlock(); setLang(lang() === 'ko' ? 'en' : 'ko'); syncLang(); sfx('tap'); void say(['t:look']);
+    unlock(); setLang(lang() === 'ko' ? 'en' : 'ko'); syncLang(); sfx('tap');
+    // silently during the say turn: the tutor's "look!" went into the open microphone (and cut the turn's own lines)
+    if (!(app.dataset.screen === 'game' && !$('#sayCard').hidden)) void say(['t:look']);
   });
   document.querySelectorAll<HTMLElement>('.seg button').forEach((b) => b.addEventListener('click', () => {
     setLang(b.dataset.l as 'ko' | 'en'); syncLang(); sfx('tap'); void say(['t:look']);
@@ -247,7 +249,13 @@ async function boot() {
   tutor.el.appendChild(dress);
   const onDress = (e: Event) => {
     e.stopPropagation();                          // not a tap on the tutor
-    unlock(); sfx('tap');
+    unlock();
+    // not in the middle of a move / its say turn: the dress room there dropped the turn (the jump button is the only way
+    // past it) or let it run unseen behind the shop (user: "그리고 말 안했는데 넘어가는 경우 있는지 전체 검수해")
+    if (app.dataset.screen === 'game' && (game.state === 'busy' || game.state === 'listen' || !$('#sayCard').hidden)) {
+      sfx('bad'); const b = e.currentTarget as HTMLElement; b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); return;
+    }
+    sfx('tap');
     if (app.dataset.screen === 'title') {
       greeted = true;
       demo.stop();                                // the demo board goes down while dressing up; back on close

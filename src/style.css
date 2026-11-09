@@ -158,6 +158,7 @@ img { -webkit-user-drag: none; }
   box-shadow: inset 0 -10px 0 var(--dy-rim), inset 0 8px 10px rgba(255, 255, 255, .65), 0 14px 22px rgba(105, 70, 70, .2);
   transition: transform .12s ease; }
 .dress-box:active { transform: scale(.94); }
+.dress-box.nope { animation: shake .4s; }   /* not now: mid-move / the say turn (main.ts onDress) */
 .dress-box svg { width: 96px; height: 96px; fill: none; stroke: var(--dy-ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round;
   filter: drop-shadow(0 -2px 0 rgba(255, 255, 255, .5)) drop-shadow(0 3px 2px var(--dy-sh)); }
 .app[data-screen="game"] .hud-game .dress-box { pointer-events: auto; }

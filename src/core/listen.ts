@@ -2,7 +2,7 @@
 // core/stt.ts; nothing is recorded or sent anywhere). One listening session keeps the microphone open for its tries.
 import { audioCtx, holdMusic, sfx } from './audio';
 import { micBlocked, micSupported, openMic, prepareForStt, type Mic } from './mic';
-import { check, sttState, sttWhenReady } from './stt';
+import { check, sttPreload, sttState, sttWhenReady } from './stt';
 import { exactReading } from './readCheck';
 
 export type Heard = 'ok' | 'miss' | 'silence' | 'nomic' | 'aborted';
@@ -27,8 +27,8 @@ export const fakeMic = { on: false, queue: [] as (string | null)[] };
  *    than its "you" for a click or a hum;  the word ALMOST heard — log P(word) over -9 (a pass needs -7.5);  and short (≤ 2 words) or with a
  *    word close to the target (same first letter, likeness ≥ 0.6: "A, A, ant" yes — "What do you think?" for ant no).
  *  On the tools/qa set (stt_set → stt_eval; scratch pm/try_rule.py): rejected readings of the right word 46% still count
- *  as tries, other people's lines 8% (was all), noise / music never. What isn't a try is ignored — the child keeps the
- *  whole wait to say it, and the tutor reads it again — so the rule leans strict: a missed "Almost!" costs nothing,
+ *  as tries, other people's lines 8% (was all), noise / music never. What isn't a try ends the wait as if it was quiet
+ *  (the tutor reads it again, no "Almost!") — so the rule leans strict: a missed "Almost!" costs nothing,
  *  praise for someone else's talk does (with -10: other people's lines 18%, ~25% of turns with talk around end in it). */
 const TRY = { maxNo: 0.35, minT: -9, maxWords: 2, like: 0.6 };
 const wordsOf = (s: string) => s.toLowerCase().match(/[a-z]+/g) ?? [];
@@ -98,24 +98,26 @@ export class Listener {
         o.onState?.('thinking');
         // still downloading: wait for it (≤ 30 s, the mic shows 'thinking') — passing any voice meanwhile paid coins for no
         // word (user: "단어 말 안해도 그냥 넘어갈때가 있는지 확인해"); still not there → no coins, and no "wrong" either
+        if (sttState() === 'off') sttPreload();
         const tw = performance.now();
         while (sttState() === 'loading' && performance.now() - tw < 30000) {
           if (o.aborted()) return 'aborted';
           await sttWhenReady(250);
         }
         if (sttState() === 'loading') return 'nomic';
-        if (sttState() !== 'ready') return 'ok';            // no recogniser on this device at all: a clear voice was heard
+        // no recogniser on this device (it failed to load): nothing can tell the word from any other sound — any voice used
+        // to pay, a cough or someone talking included (user: "그리고 말 안했는데 넘어가는 경우 있는지 전체 검수해"); no coins without the word:
+        // the turn ends as with no microphone
+        if (sttState() !== 'ready') return 'nomic';
         const out = await check(await prepareForStt(r.pcm, r.sr), word, o.alts, o.rivals);
-        if (!out) return 'ok';
+        if (!out) return 'silence';                       // the check failed (worker error / over 15 s): not heard — it used to pay
         if (o.aborted()) return 'aborted';
         if (out.ok) { this.lastHeard = out.text; return 'ok'; }
-        // not the word, and nothing like a try at it (the room, a knock, other people talking): not the child's turn —
-        // keep listening for the rest of the wait
-        if (!triedWord(out, [word, ...o.alts])) {
-          this.ignored.push(`${out.text || '·'} [no ${out.pNo} word ${out.sT}]`);
-          if (until - performance.now() > 400) { o.onState?.('waiting'); continue; }
-          return 'silence';
-        }
+        // not the word, and nothing like a try at it (the room, other people talking): not the child's — no "Almost!", no
+        // "Good try!"; the wait ends as if quiet and the tutor reads it again. ONE recognised sound per wait: listening on
+        // after it let other people's talk be recognised 2-3× as often, and any of them may pass as the word (scratch
+        // pm/turn_audit.py, the child silent, Korean talk nearby all along: coins 15% → 34%, back to 15% like this)
+        if (!triedWord(out, [word, ...o.alts])) { this.ignored.push(`${out.text || '·'} [no ${out.pNo} word ${out.sT}]`); return 'silence'; }
         this.lastHeard = out.text;
         return 'miss';
       }
