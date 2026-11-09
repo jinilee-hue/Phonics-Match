@@ -170,6 +170,12 @@
 1.127,
 1.794
 ],
+"t:jump": [
+"t_jump.mp3",
+0.03,
+1.133,
+2.01
+],
 "t:wow": [
 "t_wow.mp3",
 0.02,
@@ -349,6 +355,12 @@
 0.02,
 0.861,
 2.908
+],
+"k:jump": [
+"k_jump.mp3",
+0.03,
+0.941,
+2.106
 ],
 "k:wow": [
 "k_wow.mp3",
@@ -968,6 +980,7 @@
 "poor": "Say more words to get coins!",
 "look": "How do I look?",
 "micask": "Tap allow, so I can hear you!",
+"jump": "Want to skip? Tap the jump button!",
 "wow": "Wow!",
 "nice": "Nice!"
 },
@@ -1000,6 +1013,7 @@
 "poor": "단어를 따라 말하면 코인을 모을 수 있어!",
 "look": "나 어때?",
 "micask": "허용 버튼을 눌러 줘! 그래야 내가 들을 수 있어!",
+"jump": "넘어가고 싶으면 점프 버튼을 눌러!",
 "wow": "와우!",
 "nice": "좋아!"
 }

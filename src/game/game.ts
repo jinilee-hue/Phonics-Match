@@ -40,6 +40,8 @@ export class Game {
   private earned = 0;
   private moveSeq = 0;
   private taught = false;
+  /** the jump button's guide was shown in this level */
+  private jumpTold = false;
   private card = $('#sayCard');
   rnd: () => number = Math.random;
 
@@ -63,7 +65,7 @@ export class Game {
     this.stopAll();                 // (bumps seq itself: take this level's number after it)
     const s = ++this.seq;
     useLevelAnimals(n);             // this level's animal per letter (a slot with several takes them in turn)
-    this.n = n; this.lv = levelOf(n); this.moves = this.lv.moves; this.earned = 0; this.hints = 0;
+    this.n = n; this.lv = levelOf(n); this.moves = this.lv.moves; this.earned = 0; this.hints = 0; this.jumpTold = false;
     this.goals = this.lv.goals.map(([k, need]) => ({ k, need, got: 0 }));
     this.hud.level(n); this.hud.moves(this.moves); this.hud.goals(this.goals); this.hud.progress(0);
     this.grid.fill(this.favour(), this.lv.bias);
@@ -274,6 +276,8 @@ export class Game {
       } else {
         // silence: the tutor reads it again and waits once more; quiet again → on, without coins
         if (++quiet >= 2) break;
+        // the first quiet turn of a level: the tutor shows the jump button (user: "점프하고 싶으면 점프버튼 눌러야 하는 안내 가이드도 있으면 좋을거 같은데..")
+        if (!this.jumpTold) { this.jumpTold = true; await this.jumpGuide(); if (!this.alive(s) || this.listenAbort) break; }
         this.tutor.act('bounce');
         await this.sayTurn([`s:${a.letter}`, 0.3, `s:${a.letter}`, 0.4, `w:${a.word}`]);
       }
@@ -295,6 +299,33 @@ export class Game {
     if (this.card.hidden || !this.card.classList.contains('can-skip')) return;
     sfx('tap'); this.listenAbort = true; stopSpeech();
     this.skipped?.(); this.skipped = null;
+  }
+  /** "넘어가고 싶으면 점프 버튼을 눌러!" — the white glove taps the jump button twice (it hops each time) while the tutor says it */
+  private async jumpGuide() {
+    const btn = this.card.querySelector('.sc-skip') as HTMLElement | null;
+    if (!btn) return;
+    const b = boxIn(this.fx.stage, btn);
+    const h = finger('hand jump-hand');
+    this.fx.dom.appendChild(h);
+    const at = (x: number, y: number, sc = 1) => `translate(${x - TIP_X}px, ${y - TIP_Y}px) scale(${sc})`;
+    const x = b.cx + 6, y = b.cy + 12;   // the fingertip on the button, a little below its centre
+    const D = 2400;
+    const anim = h.animate([
+      { transform: at(x + 90, y + 160, 1.05), opacity: 0, offset: 0 },
+      { transform: at(x, y), opacity: 1, offset: 0.24 },
+      { transform: at(x, y, 0.86), offset: 0.34 },
+      { transform: at(x, y), offset: 0.46 },
+      { transform: at(x, y, 0.86), offset: 0.56 },
+      { transform: at(x, y), opacity: 1, offset: 0.74 },
+      { transform: at(x + 70, y + 130, 1.05), opacity: 0, offset: 1 },
+    ], { duration: D, easing: 'ease-in-out', fill: 'forwards' });
+    const hop = () => { btn.classList.remove('poke'); void btn.offsetWidth; btn.classList.add('poke'); sfx('tap'); };
+    const t1 = window.setTimeout(hop, D * 0.34), t2 = window.setTimeout(hop, D * 0.56);
+    this.tutor.act('nod');
+    try {
+      await this.sayTurn(['t:jump']);
+      if (!this.listenAbort) await Promise.race([anim.finished.catch(() => undefined), wait(1200)]);
+    } finally { clearTimeout(t1); clearTimeout(t2); h.remove(); btn.classList.remove('poke'); }
   }
 
   private async bonus(s: number) {

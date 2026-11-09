@@ -323,13 +323,23 @@ img { -webkit-user-drag: none; }
 #sayCard { top: 347px; }   /* 123 up with the tutor (was .say-card's 470; user: "캐릭터와 단어 말풍선 조금 위로 올려줘") */
 #sayCard .sc-mic { left: auto; right: 1266px; top: 928px; bottom: auto; margin: 0; width: 200px; height: 200px; }   /* card top 347 + 928 = 1275: centre on 1375 */
 .demo-card .sc-mic { left: 330px; top: 694px; bottom: auto; margin: 0; width: 200px; height: 200px; }
-/* skip the saying (user: "단어 말 안해도 그냥 넘어갈때가 있는지 확인해 그리고 말하기 버튼 스킵할수 있게 하는게 나은지도 확인해" → "수정해"): a round lavender button beside the mic on the board's bottom edge
-   (centre 1594, 1375: 44 px past the mic's ring), there for the whole say turn, gone once it's right; scale/opacity for
-   in/out so .round-btn's :active press (transform) still works */
-#sayCard .sc-skip { position: absolute; right: 1080px; top: 962px; width: 132px; height: 132px; padding: 0; z-index: 1;
+/* the jump button (user: "건너뛰기 버튼 위치가 애매한데" → "좀 어울리게 점프 느낌으로 넣는건 어때?" → "점프하고 싶으면 점프버튼
+   눌러야 하는 안내 가이드도 있으면 좋을거 같은데.."): perched on the say bubble's top-right edge — beside the mic on the
+   board's edge it was left on its own while the tutor talked (the mic only shows while it listens), and inline after the
+   word it widened the bubble by 116 px so the bubble covered the board's right column for most words. The ✓ of a right
+   answer comes up in the same corner. It jumps in when the turn starts and hops when the guide's glove taps it (.poke,
+   game.ts jumpGuide); green, a 'jump over' icon. opacity / scale / translate for in, out and the hops, so .round-btn's
+   :active press (transform) still works */
+#sayCard .sc-skip { position: absolute; right: 70px; top: -59px; width: 118px; height: 118px; padding: 0; z-index: 1;
   opacity: 0; scale: .4; pointer-events: none; transition: opacity .2s, scale .3s cubic-bezier(.2, 1.6, .4, 1), transform .12s ease; }
-#sayCard.can-skip .sc-skip { opacity: 1; scale: 1; pointer-events: auto; }
+#sayCard.can-skip .sc-skip { opacity: 1; scale: 1; pointer-events: auto; animation: jump-in .62s cubic-bezier(.3, .7, .4, 1) both; }
+#sayCard.can-skip .sc-skip.poke { animation: jump-in .62s cubic-bezier(.3, .7, .4, 1) both, jump-hop .52s ease-out; }
 #sayCard.ok .sc-skip { opacity: 0; scale: .4; pointer-events: none; }
+#sayCard .sc-skip svg circle { fill: #fff; stroke: none; }
+@keyframes jump-in { 0% { opacity: 0; translate: 0 60px; scale: .5; } 18% { opacity: 1; translate: 0 26px; scale: 1.08 .9; }
+  50% { translate: 0 -40px; scale: .94 1.07; } 78% { translate: 0 0; scale: 1.1 .9; } 100% { opacity: 1; translate: 0 0; scale: 1; } }
+@keyframes jump-hop { 0% { translate: 0 0; scale: 1; } 18% { translate: 0 5px; scale: 1.1 .9; } 50% { translate: 0 -36px; scale: .94 1.07; }
+  80% { translate: 0 0; scale: 1.1 .9; } 100% { translate: 0 0; scale: 1; } }
 /* green with the ▶▶| skip icon (user: "▶| 가 건너뛰기 아이콘이라고 보기 어려워. 그리고 컬러도 초록색 버튼으로 바꿔줘"): the game's green pills' colours, white line icon */
 #sayCard .sc-skip { background: linear-gradient(180deg, #a6ea6f, #4fbf43);
   box-shadow: inset 0 -10px 0 #339132, inset 0 8px 8px rgba(255, 255, 255, .45), 0 12px 18px rgba(60, 40, 50, .25); }

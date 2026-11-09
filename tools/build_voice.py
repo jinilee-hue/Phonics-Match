@@ -85,6 +85,7 @@ TUTOR = {
     'poor': 'Say more words to get coins!',
     'look': 'How do I look?',
     'micask': 'Tap allow, so I can hear you!',
+    'jump': 'Want to skip? Tap the jump button!',   # the jump button's guide ("점프하고 싶으면 점프버튼 눌러야 하는 안내 가이드도 있으면 좋을거 같은데..")
 }
 # Korean (the default — the user's concept video narrates in Korean: "친구들 안녕! … 와우! 피그! 따라해봐 피그!").
 # A value is the text, or (text, what the voice reads) where they differ.
@@ -117,6 +118,7 @@ TUTOR_KO = {
     'poor': '단어를 따라 말하면 코인을 모을 수 있어!',
     'look': '나 어때?',
     'micask': '허용 버튼을 눌러 줘! 그래야 내가 들을 수 있어!',
+    'jump': '넘어가고 싶으면 점프 버튼을 눌러!',
     'wow': '와우!',
     'nice': '좋아!',
 }
