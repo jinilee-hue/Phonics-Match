@@ -328,7 +328,8 @@ img { -webkit-user-drag: none; }
    board's edge it was left on its own while the tutor talked (the mic only shows while it listens), and inline after the
    word it widened the bubble by 116 px so the bubble covered the board's right column for most words. The ✓ of a right
    answer comes up in the same corner. It jumps in when the turn starts and hops when the guide's glove taps it (.poke,
-   game.ts jumpGuide); green, a 'jump over' icon. opacity / scale / translate for in, out and the hops, so .round-btn's
+   game.ts jumpGuide); green, a jumping child (user: "점프 버튼 좀더 명확한 모양의 아이콘 없을까?" → B of scratch
+   pm/jump_icons.py; an arc arrow over a dot read as 'redo'). opacity / scale / translate for in, out and the hops, so .round-btn's
    :active press (transform) still works */
 #sayCard .sc-skip { position: absolute; right: 70px; top: -59px; width: 118px; height: 118px; padding: 0; z-index: 1;
   opacity: 0; scale: .4; pointer-events: none; transition: opacity .2s, scale .3s cubic-bezier(.2, 1.6, .4, 1), transform .12s ease; }
