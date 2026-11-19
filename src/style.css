@@ -190,6 +190,10 @@ img { -webkit-user-drag: none; }
 .key-btn[data-api="on"] .dot { background: #34c98a; }
 .game-bar { position: absolute; right: 44px; top: 44px; display: flex; gap: 24px; }
 .lang-btn { font-size: 44px; font-weight: 800; letter-spacing: -1px; color: var(--lav-ink); line-height: 1; }
+/* round flags (every phonics game shows the language as a flag) */
+.lang-btn svg { width: 64%; height: 64%; border-radius: 50%; box-shadow: 0 0 0 4px rgba(255, 255, 255, .9), 0 3px 6px rgba(60, 40, 90, .25); }
+.seg button { display: inline-flex; align-items: center; gap: 22px; }
+.seg button svg { width: 80px; height: 80px; border-radius: 50%; flex: none; box-shadow: 0 0 0 4px rgba(255, 255, 255, .9); }
 .vol-wrap { position: relative; }   /* (.vol is the settings card's range input) */
 .vol-panel { position: absolute; top: calc(100% + 36px); left: 50%; translate: -50% 0; width: 124px; height: 400px; border-radius: 62px; touch-action: none; cursor: pointer;
   background: linear-gradient(180deg, var(--cream-hi), var(--cream));
