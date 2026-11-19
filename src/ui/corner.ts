@@ -3,6 +3,7 @@
 // the game's goes back to the title.
 import { setVolume, settings, sfx, unlock } from '../core/audio';
 import { stopSpeech } from '../core/speech';
+import '../vendor/phonics-api.js';
 
 const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
 
@@ -51,5 +52,11 @@ export function titleControls(o: { toTitle: () => void }) {
   const paint = bindMute();
   bindExit($('#btnExit'));
   $('#btnExitGame').addEventListener('click', () => { sfx('tap'); stopSpeech(); o.toTitle(); });
+  // phonics-api key (title only): a teacher enters it once per device; the dot shows who judges the tries
+  const key = $<HTMLButtonElement>('#btnKey'), PA = window.PhonicsAPI;
+  const showApi = () => { key.dataset.api = PA.status(); };
+  window.addEventListener('phonicsapi:status', showApi);
+  key.addEventListener('click', async (e) => { e.stopPropagation(); unlock(); sfx('tap'); await PA.keyDialog(); showApi(); });
+  void PA.init().then(showApi);
   return { close() {}, sync: paint };
 }

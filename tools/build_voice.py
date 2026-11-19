@@ -413,3 +413,10 @@ JSON_OUT.write_text(json.dumps({**voice, 'clips': manifest, 'lines': TUTOR, 'lin
 d = sorted((v[3], k) for k, v in manifest.items())
 size = sum((OUT / v[0]).stat().st_size for v in manifest.values())
 print(f'{len(manifest)} clips · {size / 1024:.0f} KB · shortest {d[:3]} · longest {d[-3:]}')
+
+# the lesson pack's word clips and /m/ over the official ones above (phonics-kit rule 2026-11-19), then the versions again
+sys.path.insert(0, str(pathlib.Path.home() / 'Documents/Jini/2026/Phonics/phonics-kit/tools'))
+import pack_voice  # noqa: E402
+
+pack_voice.apply(ROOT, word_db=-17, sound_db=-18)
+subprocess.run([sys.executable, str(ROOT / 'tools/voice_ver.py')], check=True)

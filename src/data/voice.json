@@ -388,9 +388,9 @@
 ],
 "s:m": [
 "s_m.mp3",
-0.42,
-0.485,
-1.121
+0.47,
+0.513,
+1.138
 ],
 "s:a": [
 "s_a.mp3",
@@ -544,15 +544,15 @@
 ],
 "w:monkey": [
 "w_monkey.mp3",
-0.43,
-0.634,
-0.981
+0.47,
+0.663,
+0.97
 ],
 "w:mouse": [
 "w_mouse.mp3",
-0.44,
-0.634,
-0.971
+0.48,
+0.679,
+0.96
 ],
 "w:ant": [
 "w_ant.mp3",
@@ -682,9 +682,9 @@
 ],
 "w:fox": [
 "w_fox.mp3",
-0.44,
-0.496,
-1.153
+0.48,
+0.522,
+1.176
 ],
 "w:zebra": [
 "w_zebra.mp3",
@@ -694,15 +694,15 @@
 ],
 "w:mug": [
 "w_mug.mp3",
-0.42,
-0.442,
-1.043
+0.47,
+0.5,
+1.042
 ],
 "w:mop": [
 "w_mop.mp3",
-0.42,
-0.457,
-0.964
+0.47,
+0.48,
+0.97
 ],
 "w:ax": [
 "w_ax.mp3",
@@ -790,9 +790,9 @@
 ],
 "w:doll": [
 "w_doll.mp3",
-0.42,
-0.677,
-0.964
+0.47,
+0.708,
+0.97
 ],
 "w:door": [
 "w_door.mp3",
@@ -844,9 +844,9 @@
 ],
 "w:kite": [
 "w_kite.mp3",
-0.43,
-0.493,
-0.902
+0.47,
+0.521,
+0.898
 ],
 "w:key": [
 "w_key.mp3",
@@ -856,15 +856,15 @@
 ],
 "w:egg": [
 "w_egg.mp3",
-0.31,
-0.497,
-0.813
+0.36,
+0.514,
+0.816
 ],
 "w:gift": [
 "w_gift.mp3",
-0.43,
-0.546,
-0.954
+0.47,
+0.564,
+0.946
 ],
 "w:window": [
 "w_window.mp3",
@@ -1076,7 +1076,7 @@
 "s_j.mp3": "654c80ed",
 "s_k.mp3": "4142ab96",
 "s_l.mp3": "5f0ac580",
-"s_m.mp3": "0f74599a",
+"s_m.mp3": "40e14b13",
 "s_n.mp3": "ace6e274",
 "s_o.mp3": "654dedee",
 "s_p.mp3": "71ff2ff4",
@@ -1135,16 +1135,16 @@
 "w_cow.mp3": "a2c32046",
 "w_cup.mp3": "7c7e4ddb",
 "w_dog.mp3": "ac69bc9c",
-"w_doll.mp3": "b46d144b",
+"w_doll.mp3": "0d53b0bb",
 "w_door.mp3": "17e00fe5",
 "w_duck.mp3": "89e68452",
-"w_egg.mp3": "a03ccf5f",
+"w_egg.mp3": "b44f7b01",
 "w_elephant.mp3": "09c4da1f",
 "w_fan.mp3": "0b6c61bc",
 "w_fish.mp3": "b36e5a00",
 "w_fork.mp3": "c8152be0",
-"w_fox.mp3": "6b1aa966",
-"w_gift.mp3": "c2374a2e",
+"w_fox.mp3": "37910558",
+"w_gift.mp3": "39f39159",
 "w_goat.mp3": "6fbe31d4",
 "w_grape.mp3": "93621ba2",
 "w_hat.mp3": "701db0cf",
@@ -1155,15 +1155,15 @@
 "w_jar.mp3": "3a911be9",
 "w_jet.mp3": "dc2e03b7",
 "w_key.mp3": "bac4deb3",
-"w_kite.mp3": "f53921e3",
+"w_kite.mp3": "d00ea8f6",
 "w_lamp.mp3": "4aa95237",
 "w_lemon.mp3": "6291aadc",
 "w_lion.mp3": "952bdcec",
 "w_lock.mp3": "0f697cb6",
-"w_monkey.mp3": "8782100f",
-"w_mop.mp3": "2f511b41",
-"w_mouse.mp3": "4c444b28",
-"w_mug.mp3": "6a23fb56",
+"w_monkey.mp3": "150fa83d",
+"w_mop.mp3": "72db2148",
+"w_mouse.mp3": "d06566a5",
+"w_mug.mp3": "4b197ac2",
 "w_nail.mp3": "7d1a29c6",
 "w_net.mp3": "5ffa5aca",
 "w_octopus.mp3": "0d80979e",
@@ -1192,5 +1192,23 @@
 "w_yarn.mp3": "6f30c0c1",
 "w_zebra.mp3": "6f486377",
 "w_zipper.mp3": "17a5069c"
+},
+"pack": {
+"tb_id": "FP.K.U1L1",
+"resource_version": "7d84ed9274adfdba57845017f7d6dca290f3ed8dac92aa4b9ae97d7a096a2df2",
+"words": [
+"monkey",
+"mouse",
+"fox",
+"mug",
+"mop",
+"doll",
+"kite",
+"egg",
+"gift"
+],
+"sounds": [
+"m"
+]
 }
 }

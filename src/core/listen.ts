@@ -1,9 +1,11 @@
-// "Say it after me": listen for the child's try at the sound + word the tutor just read (on-device recogniser,
-// core/stt.ts; nothing is recorded or sent anywhere). One listening session keeps the microphone open for its tries.
+// "Say it after me": listen for the child's try at the sound + word the tutor just read. Judged by the company phonics-api
+// when this device has a key (core/apiCheck.ts; the try is sent once, the server keeps no audio), else by the on-device
+// recogniser (core/stt.ts; nothing leaves the device). Nothing is recorded. One listening session keeps the mic open.
 import { audioCtx, holdMusic, sfx } from './audio';
 import { micBlocked, micSupported, openMic, prepareForStt, type Mic } from './mic';
 import { check, sttPreload, sttState, sttWhenReady } from './stt';
 import { exactReading } from './readCheck';
+import { apiCheck } from './apiCheck';
 
 export type Heard = 'ok' | 'miss' | 'silence' | 'nomic' | 'aborted';
 export interface HearOpts {
@@ -96,6 +98,18 @@ export class Listener {
         // nothing — or a click too short to be a word, which used to end the wait early: keep listening till the end
         if (r.kind === 'silence') { if (until - performance.now() > 400) continue; return 'silence'; }
         o.onState?.('thinking');
+        const pcm16 = await prepareForStt(r.pcm, r.sr);
+        // the company phonics-api first: 'ok' pays; another board word ('wrong') or a sound close to the word (≤ 0.7 off
+        // per sound) is the child's try ("Almost!"); anything else isn't the child's (the room) — the wait ends as if
+        // quiet, like a non-try below. ONE judged sound per wait, as with whisper.
+        const api = await apiCheck(pcm16, word, o.rivals);
+        if (api) {
+          if (o.aborted()) return 'aborted';
+          if (api.verdict === 'ok') { this.lastHeard = api.heard; return 'ok'; }
+          if (api.verdict === 'wrong' || (api.verdict === 'unclear' && api.rel <= 0.7)) { this.lastHeard = api.heard; return 'miss'; }
+          this.ignored.push(`${api.heard || '·'} [phonics-api ${api.verdict} ${api.rel}]`);
+          return 'silence';
+        }
         // still downloading: wait for it (≤ 30 s, the mic shows 'thinking') — passing any voice meanwhile paid coins for no
         // word (user: "단어 말 안해도 그냥 넘어갈때가 있는지 확인해"); still not there → no coins, and no "wrong" either
         if (sttState() === 'off') sttPreload();
@@ -109,7 +123,7 @@ export class Listener {
         // to pay, a cough or someone talking included (user: "그리고 말 안했는데 넘어가는 경우 있는지 전체 검수해"); no coins without the word:
         // the turn ends as with no microphone
         if (sttState() !== 'ready') return 'nomic';
-        const out = await check(await prepareForStt(r.pcm, r.sr), word, o.alts, o.rivals);
+        const out = await check(pcm16, word, o.alts, o.rivals);
         if (!out) return 'silence';                       // the check failed (worker error / over 15 s): not heard — it used to pay
         if (o.aborted()) return 'aborted';
         if (out.ok) { this.lastHeard = out.text; return 'ok'; }

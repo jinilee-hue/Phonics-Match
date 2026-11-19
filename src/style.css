@@ -182,6 +182,12 @@ img { -webkit-user-drag: none; }
 .sq-btn.sound-btn, #btnExit, #btnExitGame { background: linear-gradient(180deg, var(--b-hi) 0%, var(--b-mid) 55%, var(--b-lo) 100%);
   box-shadow: 0 14px 22px rgba(105, 70, 70, .22), inset 0 -10px 0 var(--b-rim), inset 0 8px 10px rgba(255, 255, 255, .65); }
 .sq-btn.line.sound-btn svg, #btnExit svg, #btnExitGame svg { stroke: var(--b-ink); filter: drop-shadow(0 -2px 0 rgba(255, 255, 255, .5)) drop-shadow(0 3px 2px var(--b-sh)); }
+/* phonics-api key (title only; lavender like 한글): a teacher enters it once per device; the dot = green when the company
+   server judges the tries, grey when the on-device whisper does (no key / offline) */
+.title-bar.left { right: auto; left: 44px; }   /* the teacher's key: away from the kids' buttons and the orbiting letters */
+.key-btn .dot { position: absolute; right: 8px; top: 8px; width: 34px; height: 34px; border-radius: 50%; background: #b9b2c9;
+  box-shadow: 0 0 0 6px var(--lav-hi); pointer-events: none; transition: background .2s; }
+.key-btn[data-api="on"] .dot { background: #34c98a; }
 .game-bar { position: absolute; right: 44px; top: 44px; display: flex; gap: 24px; }
 .lang-btn { font-size: 44px; font-weight: 800; letter-spacing: -1px; color: var(--lav-ink); line-height: 1; }
 .vol-wrap { position: relative; }   /* (.vol is the settings card's range input) */

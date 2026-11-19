@@ -104,6 +104,8 @@ async function boot() {
     void demo.narrate();          // hello, then how to play on the demo board (ui/demo.ts)
   };
   const firstTouch = (e: Event) => {
+    // the teacher's key button / key dialog: the hello waits for the children's first touch
+    if ((e.target as Element | null)?.closest?.('#btnKey, [role="dialog"]')) return;
     window.removeEventListener('pointerdown', firstTouch, true);
     unlock();
     if ((e.target as Element | null)?.closest?.('#btnPlay, .skip-btn, #btnDress')) { greeted = true; return; }   // (SKIP on the quiet demo, dress up: no hello)
