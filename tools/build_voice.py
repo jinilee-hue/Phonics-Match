@@ -1,4 +1,7 @@
-"""Pre-made voice clips for Phonics Match (no device speechSynthesis: the voice must be the same on every device).
+"""2026-11-20 (user: "Ava Multilingual · aiden 높이·빠르기 이걸로 통일"): default engine `phonics-api` — the tutor's English +
+Korean lines in the one tutor voice of the phonics games (phonics-kit tts_voice.tutor / tutor_takes, read back + retaken);
+`--engine qwen` = the previous company-TTS 'aiden', `--engine edge` = the offline prototype.
+Pre-made voice clips for Phonics Match (no device speechSynthesis: the voice must be the same on every device).
 
 - Tutor lines: the company TTS (Qwen3-TTS, OpenAI-style /audio/speech), preset 'aiden' with a cheerful 7-year-old-boy
   instruction — the one tutor voice the user picked for Phonics Island / Magic Block. → public/voice/t_<key>.mp3
@@ -36,7 +39,7 @@ JSON_OUT = ROOT / 'src' / 'data' / 'voice.json'
 PI = pathlib.Path.home() / 'Documents/Jini/2026/Phonics/Phonics_island/phonics-island-3d/public'
 NAT = pathlib.Path.home() / 'Documents/Jini/2026/Phonics/Phonics_island/fpr_assets/audio/낱말'   # approved word assets
 SR = 24000
-ENGINE = sys.argv[sys.argv.index('--engine') + 1] if '--engine' in sys.argv else 'qwen'
+ENGINE = sys.argv[sys.argv.index('--engine') + 1] if '--engine' in sys.argv else 'phonics-api'
 CACHE = pathlib.Path.home() / '.cache' / 'phonics-match' / ('voice' if ENGINE == 'edge' else 'voice_qwen')
 CHECK_MODELS = pathlib.Path('/Users/jini/.hermes/cache/scratch/jenga/models')
 
@@ -321,7 +324,17 @@ def trim(raw, dst, target_db=-17, floor_db=-50):
 
 CACHE.mkdir(parents=True, exist_ok=True)
 chosen = {}
-if ENGINE == 'edge':
+if ENGINE == 'phonics-api':
+    # the unified tutor voice of the phonics games (user 2026-11-20): Azure Ava Multilingual through the company
+    # phonics-api, shaped to the old 'aiden' pitch + pace (phonics-kit tts_voice.tutor), English and Korean in one voice;
+    # every take read back with whisper small and retaken with another wording until heard right (tutor_takes)
+    sys.path.insert(0, str(pathlib.Path.home() / 'Documents/Jini/2026/Phonics/phonics-kit/tools'))
+    import tts_voice  # noqa: E402
+    import tutor_takes  # noqa: E402
+    chosen, never = tutor_takes.best([(key, text, 'ko' if key[0] == 'k' else 'en') for key, text in JOBS])
+    if never:
+        print('never heard right (kept take 1 — check by ear):', never)
+elif ENGINE == 'edge':
     todo = []
     for key, text in JOBS:
         if key[0] == 'k':
@@ -404,7 +417,9 @@ for word, L, off in BOARD:
     if off:
         place(f'w:{word}', PI / fpr[off] if off.startswith('word:') else NAT / off, OUT / f'w_{word}.mp3', target_db=-17, floor_db=-40)
 
-voice = {'engine': 'edge', 'voice': VOICE} if ENGINE == 'edge' else {'engine': 'company-tts', 'voice': QWEN_VOICE}
+voice = {'engine': 'edge', 'voice': VOICE} if ENGINE == 'edge' \
+    else {'engine': 'phonics-api', 'voice': tts_voice.TUTOR_VOICE, 'shape': tts_voice.TUTOR_SHAPE} if ENGINE == 'phonics-api' \
+    else {'engine': 'company-tts', 'voice': QWEN_VOICE}
 JSON_OUT.parent.mkdir(parents=True, exist_ok=True)
 # ver: a content version per file — core/audio.ts loads voice/<file>?v=<ver> (a re-recorded clip keeps its name; see tools/voice_ver.py)
 ver = {v[0]: hashlib.md5((OUT / v[0]).read_bytes()).hexdigest()[:8] for v in manifest.values()}
