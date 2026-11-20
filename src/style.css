@@ -557,3 +557,31 @@ img { -webkit-user-drag: none; }
 .loading i { width: 90px; height: 90px; border-radius: 50%; border: 12px solid rgba(255, 255, 255, .5); border-top-color: #f2558c; animation: spin .8s linear infinite; }
 .loading.done { opacity: 0; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; } }
+
+/* ── top bars on the Toy Catch standard (user 2026-11-20: "상단 버튼들 크기도 제각각 같은데 Toy-Catch 기준으로 다 바꿔볼까?" → "응")
+   Toy Catch: button = 7.6 u, 3 u from the top and the side, 0.17 button apart, u = min(1vh, 100vw / 177.78). On this
+   2752×1536 stage u ≈ 15.4 design px → 117 px buttons (were 150), 46 px in, 20 px apart. The bars are zoomed (0.78) so
+   every button keeps its own look — radius, rims, shadows — just smaller; the bar's own offsets are set ÷ 0.78. */
+.title-bar, .game-bar { zoom: .78; top: 59px; right: 59px; gap: 25.6px; }
+.title-bar.left { right: auto; left: 59px; }
+/* the language: a toggle like Toy Catch's — both round flags, the one in use on a white knob (sizes in the 150 px button) */
+.sq-btn.lang-btn { --hb: 150px; width: auto; display: flex; align-items: center; gap: calc(.03 * var(--hb)); padding: 0 calc(.08 * var(--hb)); }
+.lang-btn .knob { position: absolute; top: calc(.1 * var(--hb)); left: calc(.1 * var(--hb)); width: calc(.8 * var(--hb)); height: calc(.8 * var(--hb));
+  border-radius: 50%; background: #fff; box-shadow: 0 calc(.03 * var(--hb)) calc(.07 * var(--hb)) rgba(60, 40, 120, .3);
+  transition: transform .25s cubic-bezier(.3, 1.4, .5, 1); }
+.lang-btn[data-l="ko"] .knob { transform: translateX(calc(.87 * var(--hb))); }
+.lang-btn .flag { position: relative; z-index: 1; display: grid; place-items: center; width: calc(.84 * var(--hb)); height: calc(.84 * var(--hb)); }
+.lang-btn .flag svg { width: 86%; height: 86%; border-radius: 50%; box-shadow: none; filter: none; transition: transform .25s ease, opacity .25s ease, filter .25s ease; }
+.lang-btn .flag:not(.on) svg { transform: scale(.68); opacity: .6; filter: grayscale(.3); }
+
+/* ── the language toggle in Toy Catch's form (user 2026-11-20: "토글 형태는 이렇게 안에 그림자가 있는 형태로 통일해야해. 물론
+   컬러는 게임별로 조금씩 달라도"): a pill with a side (thickness), a groove pressed into it (inner shadow), a white knob
+   under the flag in use, the other flag small and dimmed — Toy Catch's proportions (shares of the button --hb), this game's colours. */
+.sq-btn.lang-btn::before { content: ''; position: absolute; inset: calc(.07 * var(--hb)); border-radius: calc(.25 * var(--hb)); pointer-events: none;
+  background: linear-gradient(#c7bdec, #ddd6f6); box-shadow: inset 0 calc(.05 * var(--hb)) calc(.08 * var(--hb)) rgba(70, 50, 150, .32); }
+.sq-btn.lang-btn .knob { box-shadow: 0 calc(.03 * var(--hb)) calc(.07 * var(--hb)) rgba(60, 40, 120, .34); }
+
+/* flags in rounded boxes, not circles — this game's buttons are rounded boxes (user 2026-11-20: "파닉스 매치는 국기 모양을
+   동그랗게 말고 라운드박스형태로 수정해"); main.ts clips the flag art to the same box (rx 6 of 24) */
+.lang-btn .flag svg, .seg button svg { border-radius: 25%; }
+.sq-btn.lang-btn .knob { border-radius: 30%; }
