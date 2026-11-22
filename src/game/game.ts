@@ -414,7 +414,11 @@ export class Game {
     this.board.hintDrag(m.a, m.b);
     this.hand(m.a, m.b);
     if (say1) return;
-    if (this.hints++ < 2) { void say(['t:hint']); this.tutor.act('nod'); }
+    // the voice on every hint, and again every 15 s while nothing is touched (user 2026-11-22: "두 게임 음성도 반복" — like
+    // Toy Catch; it used to speak only the first 2 hints of a level, then the glove alone). Any touch clears it (poke).
+    this.hints++; void say(['t:hint']); this.tutor.act('nod');
+    clearTimeout(this.hintT);
+    this.hintT = window.setTimeout(() => { if (this.state === 'play') this.showHint(); }, 15000);
   }
   private hand(a: number, b: number) {
     document.querySelectorAll('.hand').forEach((e) => e.remove());
