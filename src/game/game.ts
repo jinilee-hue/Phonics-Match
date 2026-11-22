@@ -14,6 +14,7 @@ import type { Hud, Goal } from '../ui/hud';
 import type { Tutor } from '../ui/tutor';
 import { finger, TIP_X, TIP_Y } from '../ui/hand';
 import { boxIn } from '../ui/stage';
+import '../vendor/phonics-progress.js';
 
 const BONUS = 10;                       // coins for saying it
 const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
@@ -356,12 +357,15 @@ export class Game {
       if (theme === 'animals') save.level = Math.max(save.level, this.n + 1);
       else save.levels = { ...save.levels, [theme]: Math.max(save.levels?.[theme] ?? 1, this.n + 1) };
       commit();
+      // the shared record every phonics game writes (phonics-kit phonics-progress.js — the launcher reads it)
+      window.PhonicsProgress?.played('phonics-match', { level: this.n, stars, won: true, movesLeft: this.moves, theme });
       this.fx.confetti(140);
       this.tutor.act('cheer');
       sfx('success');
       void say(['t:clear']);
       this.hooks.result(true, stars, reward);
     } else {
+      window.PhonicsProgress?.played('phonics-match', { level: this.n, stars: 0, won: false, theme });
       this.tutor.act('shy');
       sfx('wrong');
       void say(['t:fail']);
