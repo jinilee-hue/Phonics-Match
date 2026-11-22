@@ -19,6 +19,13 @@ import '../vendor/phonics-progress.js';
 const BONUS = 10;                       // coins for saying it
 const $ = <T extends HTMLElement = HTMLElement>(s: string) => document.querySelector(s) as T;
 const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
+/** a one-shot gate the jump button opens (as in Magic Block): the say turn's lines and listening are raced against it */
+interface Gate { done: boolean; p: Promise<void>; open: () => void }
+function gate(): Gate {
+  let res = () => {};
+  const g: Gate = { done: false, p: new Promise<void>((r) => { res = r; }), open: () => { g.done = true; res(); } };
+  return g;
+}
 
 export interface GameHooks {
   result(win: boolean, stars: number, coins: number): void;
@@ -248,58 +255,70 @@ export class Game {
     const a = ANIMALS[k];
     if (this.card.hidden) this.showCard(k);
     this.listenAbort = false;
+    const jump = this.jumpGate = gate();
     this.card.classList.add('can-skip');
     const teach = this.n === 1 && !played1() && !this.taught;
     this.taught = true;
     let misses = 0, quiet = 0;
-    for (let round = 0; round < 6; round++) {
-      await this.sayTurn([round === 0 && teach ? 't:howto2' : 't:sayit']);
-      if (!this.alive(s) || this.listenAbort) break;
-      this.card.classList.add('listen');
-      const ring = this.card.querySelector('.sc-mic .ring') as HTMLElement;
-      let asked = false;
-      const r: Heard = await this.listener.hear(a.word, {
-        alts: ALTS[a.word] ?? [], rivals: rivalsOf(a.word),
-        waitMs: quiet ? 9000 : 6000,
-        aborted: () => this.listenAbort || !this.alive(s),
-        onState: (st) => { this.card.classList.toggle('think', st === 'thinking'); if (st === 'voice') this.tutor.eyes('', 0); },
-        onLevel: (v) => ring.style.setProperty('--lv', (1 + v * 0.5).toFixed(3)),
-        onAsk: () => { if (!asked) { asked = true; void say(['t:micask']); } },
-      });
-      this.card.classList.remove('listen', 'think');
-      this.hooks.log?.(`heard ${a.word}: ${r} ${this.listener.lastHeard ?? ''}${this.listener.ignored.length ? ` · ignored: ${this.listener.ignored.join(' | ')}` : ''}`);
-      if (!this.alive(s) || r === 'aborted' || r === 'nomic') break;
-      if (r === 'ok') { this.card.classList.remove('can-skip'); await this.bonus(s); break; }
-      if (r === 'miss') {
-        this.tutor.act('nod');
-        if (++misses >= 2) { await this.sayTurn(['t:goodtry']); break; }
-        await this.sayTurn(['t:almost', 0.25, `s:${a.letter}`, 0.3, `s:${a.letter}`, 0.4, `w:${a.word}`]);
-      } else {
-        // silence: the tutor reads it again and waits once more; quiet again → on, without coins
-        if (++quiet >= 2) break;
-        // the first quiet turn of a level: the tutor shows the jump button (user: "점프하고 싶으면 점프버튼 눌러야 하는 안내 가이드도 있으면 좋을거 같은데..")
-        if (!this.jumpTold) { this.jumpTold = true; await this.jumpGuide(); if (!this.alive(s) || this.listenAbort) break; }
-        this.tutor.act('bounce');
-        await this.sayTurn([`s:${a.letter}`, 0.3, `s:${a.letter}`, 0.4, `w:${a.word}`]);
+    try {
+      for (let round = 0; round < 6; round++) {
+        await this.sayTurn([round === 0 && teach ? 't:howto2' : 't:sayit']);
+        if (!this.alive(s) || this.listenAbort) break;
+        this.card.classList.add('listen');
+        const ring = this.card.querySelector('.sc-mic .ring') as HTMLElement;
+        let asked = false;
+        // raced against the jump button: the microphone sees the abort only when an audio frame arrives, so a listen whose
+        // frames stopped (the audio context suspended, the mic unplugged) held the board locked and the music off for good
+        const r: Heard = await Promise.race([
+          this.listener.hear(a.word, {
+            alts: ALTS[a.word] ?? [], rivals: rivalsOf(a.word),
+            waitMs: quiet ? 9000 : 6000,
+            aborted: () => jump.done || this.listenAbort || !this.alive(s),
+            onState: (st) => { this.card.classList.toggle('think', st === 'thinking'); if (st === 'voice') this.tutor.eyes('', 0); },
+            onLevel: (v) => ring.style.setProperty('--lv', (1 + v * 0.5).toFixed(3)),
+            onAsk: () => { if (!asked) { asked = true; void say(['t:micask']); } },
+          }).catch((e: unknown) => { this.hooks.log?.(`hear failed: ${String(e)}`); return 'nomic' as const; }),
+          jump.p.then(() => 'aborted' as const),
+        ]);
+        this.card.classList.remove('listen', 'think');
+        this.hooks.log?.(`heard ${a.word}: ${r} ${this.listener.lastHeard ?? ''}${this.listener.ignored.length ? ` · ignored: ${this.listener.ignored.join(' | ')}` : ''}`);
+        if (!this.alive(s) || r === 'aborted' || r === 'nomic') break;
+        if (r === 'ok') { this.card.classList.remove('can-skip'); await this.bonus(s); break; }
+        if (r === 'miss') {
+          this.tutor.act('nod');
+          if (++misses >= 2) { await this.sayTurn(['t:goodtry']); break; }
+          await this.sayTurn(['t:almost', 0.25, `s:${a.letter}`, 0.3, `s:${a.letter}`, 0.4, `w:${a.word}`]);
+        } else {
+          // silence: the tutor reads it again and waits once more; quiet again → on, without coins
+          if (++quiet >= 2) break;
+          // the first quiet turn of a level: the tutor shows the jump button (user: "점프하고 싶으면 점프버튼 눌러야 하는 안내 가이드도 있으면 좋을거 같은데..")
+          if (!this.jumpTold) { this.jumpTold = true; await this.jumpGuide(); if (!this.alive(s) || this.listenAbort) break; }
+          this.tutor.act('bounce');
+          await this.sayTurn([`s:${a.letter}`, 0.3, `s:${a.letter}`, 0.4, `w:${a.word}`]);
+        }
+        if (!this.alive(s) || this.listenAbort) break;
       }
-      if (!this.alive(s) || this.listenAbort) break;
+    } finally {
+      // always: the jump button off, the mic closed and the music back (even with a reading still hanging), the card away
+      this.card.classList.remove('can-skip', 'listen', 'think');
+      this.listener.close();
+      if (this.alive(s)) this.hideCard();
     }
-    this.card.classList.remove('can-skip');
-    this.listener.close();
-    if (this.alive(s)) this.hideCard();
   }
 
-  /** a tutor line inside the say turn — the skip button cuts it short (say() itself waits out the line's length) */
+  /** a tutor line inside the say turn — the jump button cuts it short (say() itself waits out the line's length) */
   private sayTurn(parts: Parameters<typeof say>[0]) {
-    if (this.listenAbort) return Promise.resolve(false);
-    return Promise.race([say(parts), new Promise<boolean>((r) => { this.skipped = () => r(false); })]);
+    const jump = this.jumpGate;
+    if (this.listenAbort || jump.done) return Promise.resolve(false);
+    return Promise.race([say(parts), jump.p.then(() => false)]);
   }
-  private skipped: (() => void) | null = null;
+  /** the say turn's jump gate: the jump button (or leaving the game) opens it */
+  private jumpGate = gate();
   /** the say card's skip button: no coins, the board is back at once */
   skipSay() {
     if (this.card.hidden || !this.card.classList.contains('can-skip')) return;
     sfx('tap'); this.listenAbort = true; stopSpeech();
-    this.skipped?.(); this.skipped = null;
+    this.jumpGate.open();
   }
   /** "넘어가고 싶으면 점프 버튼을 눌러!" — the white glove taps the jump button twice (it hops each time) while the tutor says it */
   private async jumpGuide() {
@@ -423,7 +442,7 @@ export class Game {
   private paused: Game['state'] = 'off';
   pause() { if (this.state === 'off' || this.state === 'paused') return; this.paused = this.state; this.state = 'paused'; this.board.locked = true; this.clearHint(); this.listenAbort = true; stopSpeech(); this.hideCard(); }
   resume() { if (this.state !== 'paused') return; this.state = this.paused === 'listen' || this.paused === 'busy' ? 'play' : this.paused; if (this.state === 'play') { this.board.locked = false; this.armHint(); } }
-  stopAll() { this.seq++; this.clearHint(); this.listenAbort = true; this.listener.close(); stopSpeech(); this.card.hidden = true; this.fx.clear(); this.state = 'off'; this.board.locked = true; }
+  stopAll() { this.seq++; this.clearHint(); this.listenAbort = true; this.jumpGate.open(); this.listener.close(); stopSpeech(); this.card.hidden = true; this.fx.clear(); this.state = 'off'; this.board.locked = true; }
   get coinsThisLevel() { return this.earned; }
   get fieldOrigin() { return { x: FIELD_X, y: FIELD_Y }; }
 }

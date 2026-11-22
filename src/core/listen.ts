@@ -49,6 +49,8 @@ export function triedWord(r: { text: string; pNo: number; sT: number }, targets:
 
 export class Listener {
   private mic: Mic | null = null;
+  /** bumped by close(): a hear() still hanging after its turn ended (the jump button won the race) leaves the music alone */
+  private turn = 0;
   lastHeard: string | null = null;
   /** sounds heard and let go in the last hear() (not a try at the word) — for the log */
   ignored: string[] = [];
@@ -78,6 +80,7 @@ export class Listener {
       this.mic = m.mic;
       if (asked) await new Promise((r) => setTimeout(r, 250));
     }
+    const turn = this.turn;
     holdMusic(true);
     try {
       // the cue and the fox's last word reach the room a device's output latency late (Bluetooth / HDMI speakers:
@@ -136,8 +139,9 @@ export class Listener {
         return 'miss';
       }
     } finally {
-      holdMusic(false);
+      if (turn === this.turn) holdMusic(false);
     }
   }
-  close() { this.mic?.close(); this.mic = null; }
+  /** the turn is over: the mic off and the music back */
+  close() { this.turn++; this.mic?.close(); this.mic = null; holdMusic(false); }
 }
