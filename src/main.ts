@@ -118,9 +118,15 @@ async function boot() {
   $('#btnPlay').addEventListener('click', () => {
     unlock(); sfx('start'); void startMusic(); sttPreload();
     greeted = true;
+    const go = () => {
+      if (params.has('level')) { toGame(Number(params.get('level'))); return; }
+      openThemes();                   // pick animals / things / fruits first
+    };
+    // the first game of a visit always comes after the explanation (user 2026-11-22: "설명 있는게 맞지"): PLAY as the very
+    // first touch used to skip the hello and the narrated demo — it runs first now (SKIP cuts it), then PLAY goes on
+    if (!demo.explained) { void demo.narrate(go); return; }
     stopSpeech();
-    if (params.has('level')) { toGame(Number(params.get('level'))); return; }
-    openThemes();                     // pick animals / things / fruits first
+    go();
   });
   tutor.el.addEventListener('click', () => {
     unlock();

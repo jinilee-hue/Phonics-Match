@@ -51,6 +51,10 @@ export class Demo {
   private narrating = false;
   private greeted = false;
   private idleT = 0;
+  /** where PLAY goes once the explanation it started is over (or SKIPped); dropped if the title is left meanwhile */
+  private then: (() => void) | null = null;
+  /** the narrated explanation ran (or was SKIPped on purpose) in this visit: PLAY explains first until then (main.ts) */
+  explained = false;
 
   constructor(private host: HTMLElement, private fx: Fx, private tutor: Tutor, private title: Title) {
     const el = this.el = document.createElement('div');
@@ -94,7 +98,7 @@ export class Demo {
   /** the title is on screen: quiet replays after a while with nothing tapped */
   start() { this.on = true; this.arm(); }
   /** the title went away: everything stops, the board is down */
-  stop() { this.on = false; this.run++; this.active = false; this.narrating = false; clearTimeout(this.idleT); this.leave(); }
+  stop() { this.on = false; this.run++; this.active = false; this.narrating = false; this.then = null; clearTimeout(this.idleT); this.leave(); }
   /** something was tapped on the title: the quiet replay waits again */
   poke() { if (this.on && !this.active) this.arm(); }
   /** after SKIP (main.ts: music on, no hello later) */
@@ -104,18 +108,25 @@ export class Demo {
     if (!this.active) return;
     stopSpeech();
     this.run++;                                 // narrate() / quiet() stop at their next step
+    if (this.narrating) this.explained = true;  // skipped on purpose: PLAY won't explain again
     this.narrating = false; this.active = false; this.greeted = true;
     this.leave();
     this.onSkip();
     if (this.on) this.arm();
+    const then = this.then; this.then = null;
+    then?.();                                   // PLAY started this explanation: it goes on at once
   }
   /** the tutor is explaining the demo (taps on the tutor shouldn't start another line) */
   get talking() { return this.narrating; }
   private arm() { clearTimeout(this.idleT); this.idleT = window.setTimeout(() => void this.quiet(), this.greeted ? IDLE : IDLE_FIRST); }
 
-  /** the hello, then the tutor shows how to play on the demo board, then "press PLAY" as the board goes down */
-  async narrate() {
+  /** the hello, then the tutor shows how to play on the demo board, then "press PLAY" as the board goes down.
+   *  `then`: PLAY was pressed before any explanation (main.ts) — no "press PLAY"; `then` runs once the round is over,
+   *  or at once on SKIP */
+  async narrate(then?: () => void) {
+    if (then && this.narrating) { this.then = then; return; }   // already explaining: PLAY goes on after it
     const r = ++this.run;                       // (stops a quiet replay at its next step)
+    this.then = then ?? null;
     clearTimeout(this.idleT);
     this.greeted = this.active = this.narrating = true;
     this.leave();
@@ -125,17 +136,22 @@ export class Demo {
       this.next = 1;
       await this.enter(SCENES[0]!, r);
       await this.round(SCENES[0]!, r, true);
-      this.tutor.act('nod');
-      const bye = say(['t:pressplay']);
-      await this.w(250, r);
-      this.leave();
-      await bye;
+      this.explained = true;
+      if (this.then) this.leave();              // PLAY is pressed already: no "press PLAY"
+      else {
+        this.tutor.act('nod');
+        const bye = say(['t:pressplay']);
+        await this.w(250, r);
+        this.leave();
+        await bye;
+      }
     } catch (e) {
       if (e !== STOP) throw e;
-      if (r === this.run) this.leave();         // a line was cut (a tap on the tutor): back to the title as it was
+      if (r === this.run) { this.leave(); this.then = null; }   // a line was cut (a tap on the tutor): back to the title as it was
     } finally {
       if (r === this.run) { this.narrating = false; this.active = false; if (this.on) this.arm(); }
     }
+    if (r === this.run && this.then) { const f = this.then; this.then = null; f(); }
   }
 
   private async quiet() {
