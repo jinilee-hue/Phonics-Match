@@ -151,7 +151,7 @@ export function setVolume(v: number) {
 }
 
 // ── music: an original upbeat loop (tools/make_bgm.py; the concept videos have no music track) ─────────────────
-const MUSIC_LOOP = 32;   // seconds: 16 bars at 120 BPM (tools/make_bgm.py) — loop exactly there (an mp3 pads its last frame)
+const MUSIC_LOOP = 30;   // seconds: 16 bars at 128 BPM (tools/make_bgm.py) — loop exactly there (an mp3 pads its last frame)
 let music: AudioBufferSourceNode | null = null, musicLoading: Promise<AudioBuffer | null> | null = null;
 export async function startMusic() {
   if (!ctx || music || !settings.music) return;
