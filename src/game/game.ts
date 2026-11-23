@@ -1,6 +1,6 @@
 // One level of Phonics Match: swaps, cascades, the mission, and the tutor's phonics moment after every pop
 // (sound, sound, word → "따라 해 봐!" → the microphone listens → bonus coins when the child says it).
-import { ALTS, ANIMALS, animalTurn, levelOf, rivalsOf, splitWord, theme, useLevelAnimals, type Level } from '../data/animals';
+import { ALTS, ANIMALS, animalTurn, levelOf, rivalsOf, splitWord, theme, unitStart, useLevelAnimals, type Level } from '../data/animals';
 /** level 1 of any theme cleared once: no first-time teaching any more */
 const played1 = () => Object.keys(save.best).some((k) => k === '1' || k.endsWith(':1'));
 import { sfx } from '../core/audio';
@@ -50,6 +50,8 @@ export class Game {
   private taught = false;
   /** the jump button's guide was shown in this level */
   private jumpTold = false;
+  /** failed tries in a row at one level (theme:level) */
+  private fails = { key: '', n: 0 };
   private card = $('#sayCard');
   rnd: () => number = Math.random;
 
@@ -76,7 +78,8 @@ export class Game {
     this.n = n; this.lv = levelOf(n); this.moves = this.lv.moves; this.earned = 0; this.hints = 0; this.jumpTold = false;
     this.goals = this.lv.goals.map(([k, need]) => ({ k, need, got: 0 }));
     this.hud.level(n); this.hud.moves(this.moves); this.hud.goals(this.goals); this.hud.progress(0);
-    this.grid.fill(this.favour(), this.lv.bias);
+    this.grid.kinds = ANIMALS.length;                                   // 4 on a unit's levels 1-2, then 5
+    this.grid.fill(this.favour(), this.lv.bias, 3, this.lv.bubbles);  // + bubbles on levels 5-6
     this.state = 'intro';
     this.board.locked = true;
     await this.board.build(true);
@@ -199,6 +202,12 @@ export class Game {
         } else {
           void this.fx.goldLetter(a.letter, cx, cy - 20, null);
         }
+      }
+      // a match next to a bubble pops it (the animal inside stays, free)
+      const freed = this.grid.popBubbles(all);
+      if (freed.length) {
+        this.board.unbubble(freed); sfx('burst');
+        for (const i of freed) { const p = this.board.stageXY(i); this.fx.twinkle(p.x, p.y, 8, 150, '#fff'); }
       }
       await this.board.pop(all);
       if (!this.alive(s)) return;
@@ -367,11 +376,12 @@ export class Game {
     this.state = 'over'; this.board.locked = true; this.clearHint();
     await wait(400);
     if (!this.alive(s)) return;
+    const key = theme === 'animals' ? String(this.n) : `${theme}:${this.n}`;     // each theme keeps its own progress
+    this.fails = win ? { key: '', n: 0 } : { key, n: this.fails.key === key ? this.fails.n + 1 : 1 };
     if (win) {
       const left = this.moves / this.lv.moves;
       const stars = left >= 0.34 ? 3 : left >= 0.12 ? 2 : 1;
       const reward = 15 + stars * 5;
-      const key = theme === 'animals' ? String(this.n) : `${theme}:${this.n}`;     // each theme keeps its own progress
       save.best[key] = Math.max(save.best[key] ?? 0, stars);
       if (theme === 'animals') save.level = Math.max(save.level, this.n + 1);
       else save.levels = { ...save.levels, [theme]: Math.max(save.levels?.[theme] ?? 1, this.n + 1) };
@@ -448,6 +458,9 @@ export class Game {
   resume() { if (this.state !== 'paused') return; this.state = this.paused === 'listen' || this.paused === 'busy' ? 'play' : this.paused; if (this.state === 'play') { this.board.locked = false; this.armHint(); } }
   stopAll() { this.seq++; this.clearHint(); this.listenAbort = true; this.jumpGate.open(); this.listener.close(); stopSpeech(); this.card.hidden = true; this.fx.clear(); this.state = 'off'; this.board.locked = true; }
   get coinsThisLevel() { return this.earned; }
+  /** the fail card's Retry: the same level, or one lower after two failed tries in a row there (never below the unit's
+   *  level 1; phonics-kit README "공통 규칙: 레벨": "두 번 연속 어려워하면 한 칸 내려간다") */
+  get retryN() { return this.fails.n >= 2 && this.n > unitStart(this.n) ? this.n - 1 : this.n; }
   get fieldOrigin() { return { x: FIELD_X, y: FIELD_Y }; }
 }
 

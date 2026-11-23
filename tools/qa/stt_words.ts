@@ -9,7 +9,7 @@ for (const th of THEME_IDS) {
   setTheme(th); animalTurn(0);
   const seen = new Set<string>();
   for (let k = 0; k < UNITS.length; k++) {
-    useLevelAnimals(k * PER_UNIT + 1);
+    useLevelAnimals(k * PER_UNIT + 3);   // all five (a unit's levels 1-2 show only four)
     const board = ANIMALS.map((a) => ({ ...a }));
     for (const a of board) {
       if (seen.has(a.word)) continue;

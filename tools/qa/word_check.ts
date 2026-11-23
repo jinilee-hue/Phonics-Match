@@ -39,7 +39,7 @@ const th = process.argv.slice(2).find((a) => /^[a-z]+$/.test(a)) as Theme | unde
 if (th) setTheme(th);
 animalTurn(0);
 const only = process.argv.slice(2).map(Number).filter(Boolean);
-const levels = only.length ? only : UNITS.flatMap((_, k) => [k * PER_UNIT + 1, k * PER_UNIT + 2]);
+const levels = only.length ? only : UNITS.flatMap((_, k) => [k * PER_UNIT + 3, k * PER_UNIT + 4]);   // (a unit's levels 1-2 show only four)
 for (const n of levels) {
  useLevelAnimals(n);
  const board = ANIMALS.map((a) => ({ ...a }));

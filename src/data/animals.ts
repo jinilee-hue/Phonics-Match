@@ -90,7 +90,8 @@ function review(n: number, k: number): string[] {
   if (empty === 1) { const all = groups.flat(); return [all[(n - 1) % all.length]!]; }
   return groups.slice(-empty).map((g, j) => g[(n - 1 + j) % g.length]!);
 }
-/** level n's five: its unit's letters (+ review letters); a letter with two animals takes them in turn */
+/** level n's five: its unit's letters (+ review letters); a letter with two animals takes them in turn. A unit's levels
+ *  1-2 show only the first four (levelOf().kinds) */
 export function useLevelAnimals(n: number) {
   const k = unitIndex(n), u = UNITS[k]!, rv = review(n, k);
   let r = 0;
@@ -99,9 +100,14 @@ export function useLevelAnimals(n: number) {
     const ids = LETTERS[letter]!;
     ANIMALS[i] = make(ids[(n + turn) % ids.length]!, letter, i);
   });
-  ANIMALS.length = u.slots.length;
+  ANIMALS.length = Math.min(u.slots.length, levelOf(n).kinds);
 }
-useLevelAnimals(1);
+/** the first level of n's unit (two failed tries in a row step down, never below it); the endless levels after the units
+ *  count as one block */
+export function unitStart(n: number) {
+  const span = UNITS.length * PER_UNIT;
+  return n > span ? span + 1 : Math.floor((Math.max(1, Math.round(n)) - 1) / PER_UNIT) * PER_UNIT + 1;
+}
 /** switch the board set (the title's theme card) */
 export function setTheme(t: Theme) {
   theme = t; LETTERS = THEMES[t].letters;
@@ -164,24 +170,30 @@ export const rivalsOf = (word: string, board: Animal[] = ANIMALS) => {
   return [...out];
 };
 
-export interface Level { moves: number; goals: [number, number][] /* [slot, count] */; bias: number }
-// each unit's six: every level brings in its letters (slots), like Unit 1 always did
+export interface Level { moves: number; goals: [number, number][] /* [slot, count] */; bias: number;
+  /** animals on the board (fewer = more matches) */ kinds: number; /** animals sealed in bubbles at the start */ bubbles: number }
+// each unit's six: every level brings in its letters (slots), like Unit 1 always did. Game difficulty climbs inside the unit
+// and starts easy again with the next (phonics-kit README "공통 규칙: 레벨": "게임적으로 조금씩"): 4 animals on levels 1-2
+// (more matches; level 1 = a sure win for a 5-year-old), 5 from level 3, a few bubbles on levels 5-6, fewer moves per
+// animal asked. Simulated with the game's Grid (5000 plays each; a child making any working swap / following the hints):
+// wins 100 · 100 · 99 · 93 · 90 · 86 % / 100 · 100 · 100 · 97 · 96 · 94 %, stars 3.0 · 3.0 · 2.8 · 2.2 · 1.9 · 1.8 (all levels
+// were ~100 % with ~3 stars before). Six kinds were left out: on 5×4 the board ran out of moves (a shuffle) 1.3-1.6× a level.
 const INTRO: Level[] = [
-  { moves: 15, goals: [[0, 6]], bias: 0.12 },
-  { moves: 15, goals: [[1, 6], [0, 4]], bias: 0.1 },
-  { moves: 16, goals: [[2, 8]], bias: 0.1 },
-  { moves: 18, goals: [[3, 8], [4, 8]], bias: 0.08 },
-  { moves: 20, goals: [[0, 5], [1, 5], [2, 5]], bias: 0.06 },
-  { moves: 20, goals: [[3, 6], [4, 6], [2, 6]], bias: 0.05 },
+  { moves: 15, goals: [[0, 6]], bias: 0.12, kinds: 4, bubbles: 0 },
+  { moves: 14, goals: [[1, 6], [0, 4]], bias: 0.1, kinds: 4, bubbles: 0 },
+  { moves: 13, goals: [[2, 8]], bias: 0.1, kinds: 5, bubbles: 0 },
+  { moves: 14, goals: [[3, 8], [4, 8]], bias: 0.08, kinds: 5, bubbles: 0 },
+  { moves: 15, goals: [[0, 7], [1, 7], [2, 7]], bias: 0.06, kinds: 5, bubbles: 2 },
+  { moves: 15, goals: [[3, 8], [4, 8], [2, 8]], bias: 0.05, kinds: 5, bubbles: 3 },
 ];
 // Unit 6 = z + review: z leads every mission
 const REVIEW: Level[] = [
-  { moves: 15, goals: [[0, 6]], bias: 0.12 },
-  { moves: 16, goals: [[0, 5], [1, 5]], bias: 0.1 },
-  { moves: 18, goals: [[0, 5], [2, 6]], bias: 0.08 },
-  { moves: 18, goals: [[0, 5], [3, 5], [4, 5]], bias: 0.06 },
-  { moves: 20, goals: [[0, 6], [1, 5], [2, 5]], bias: 0.05 },
-  { moves: 20, goals: [[0, 6], [3, 6], [4, 6]], bias: 0.05 },
+  { moves: 15, goals: [[0, 6]], bias: 0.12, kinds: 4, bubbles: 0 },
+  { moves: 14, goals: [[0, 5], [1, 5]], bias: 0.1, kinds: 4, bubbles: 0 },
+  { moves: 13, goals: [[0, 6], [2, 6]], bias: 0.08, kinds: 5, bubbles: 0 },
+  { moves: 13, goals: [[0, 6], [3, 6], [4, 6]], bias: 0.06, kinds: 5, bubbles: 0 },
+  { moves: 15, goals: [[0, 7], [1, 7], [2, 7]], bias: 0.05, kinds: 5, bubbles: 2 },
+  { moves: 15, goals: [[0, 8], [3, 8], [4, 8]], bias: 0.05, kinds: 5, bubbles: 3 },
 ];
 export function levelOf(n: number): Level {
   const span = UNITS.length * PER_UNIT;
@@ -195,5 +207,6 @@ export function levelOf(n: number): Level {
   const k = 2 + Math.floor(r() * 2);
   const ids = [0, 1, 2, 3, 4].sort(() => r() - 0.5).slice(0, k);
   const each = Math.min(14, 6 + Math.floor((n - span) / 2));
-  return { moves: Math.max(16, 22 - Math.floor((n - span) / 3)), goals: ids.map((i) => [i, each] as [number, number]), bias: 0.04 };
+  return { moves: Math.max(16, 22 - Math.floor((n - span) / 3)), goals: ids.map((i) => [i, each] as [number, number]), bias: 0.04, kinds: 5, bubbles: 0 };
 }
+useLevelAnimals(1);   // (after the level tables: it reads levelOf)

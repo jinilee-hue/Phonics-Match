@@ -249,7 +249,7 @@ async function boot() {
     if (!act) return;
     sfx('tap'); closeCards();
     if (act === 'next') { void say(['t:next']); toGame(game.n + 1); }
-    else if (act === 'retry') toGame(game.n);
+    else if (act === 'retry') toGame(game.retryN);   // one level lower after two failed tries in a row
     else if (act === 'home') toTitle();
     else if (act === 'shop') { shop.onClose = () => { shop.onClose = () => {}; openCard('#result'); }; shop.show(); }
   });

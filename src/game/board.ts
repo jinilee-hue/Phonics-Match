@@ -44,6 +44,17 @@ export class Board {
     return d;
   }
   place(i: number, el: HTMLElement) { const c = this.center(i); el.style.transform = this.tf(c.x, c.y); }
+  /** an animal sealed in a soap bubble (a unit's levels 5-6; drawn in CSS, .pc .bubble) — it falls with the animal */
+  private bubble(el: HTMLElement) { const b = document.createElement('i'); b.className = 'bubble'; el.appendChild(b); }
+  /** a match next to it: the bubble swells and bursts, the animal stays */
+  unbubble(cells: number[]) {
+    for (const i of cells) {
+      const b = this.els[i]?.querySelector('.bubble') as HTMLElement | null;
+      if (!b) continue;
+      b.animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(1.18)', opacity: 0.9, offset: 0.4 }, { transform: 'scale(1.4)', opacity: 0 }],
+        { duration: 300, easing: 'ease-out', fill: 'forwards' }).finished.then(() => b.remove(), () => b.remove());
+    }
+  }
 
   /** draw the whole grid; `drop` = animals fall in row by row (level start) */
   async build(drop = false) {
@@ -51,6 +62,7 @@ export class Board {
     const jobs: Promise<unknown>[] = [];
     for (let i = 0; i < BW * BH; i++) {
       const el = this.make(this.grid.c[i]);
+      if (this.grid.cover[i]) this.bubble(el);
       this.els[i] = el; this.place(i, el);
       if (drop) {
         const c = this.center(i), y = Math.floor(i / BW);
