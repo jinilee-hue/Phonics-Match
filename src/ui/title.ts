@@ -58,6 +58,15 @@ interface L { el: HTMLImageElement; hx: number; hy: number; w: number; h: number
 interface Deco { el: HTMLImageElement; x0: number; y0: number }
 /** the letters whose home is where the demo board comes up (ui/demo.ts): they fade while it's up */
 const UNDER_DEMO = new Set(['l_t_bot', 'l_p_bot']);
+/** phones held sideways only (tablets / PCs never match): the ring's lower arc runs across PLAY, so there a swirling
+ *  letter fades out as its box nears PLAY's pill (style.css .play-btn: 1029, 876, 697 × 302, pulsing to 1.045) and is
+ *  gone before it would touch it; at rest (k 0) nothing changes */
+const PHONE_L = window.matchMedia('(orientation: landscape) and (max-height: 500px) and (pointer: coarse)');
+const PILL = { cx: 1377.5, cy: 1027, half: (697 / 2 - 151) * 1.045, r: 151 * 1.045 };
+const FADE = 36;                                                   // design px of gap over which a letter fades in
+/** gap (design px) between a letter's box (centre x, y, half sizes) and PLAY's pill; ≤ 0 = touching */
+const playGap = (x: number, y: number, hw: number, hh: number) => Math.hypot(
+  Math.max(0, Math.abs(x - PILL.cx) - hw - PILL.half), Math.max(0, Math.abs(y - PILL.cy) - hh)) - PILL.r;
 
 export class Title {
   private ls: L[] = [];
@@ -136,18 +145,19 @@ export class Title {
       }
       k *= 1 - this.holdV;
       turn *= 1 - this.holdV;
-      l.el.style.opacity = l.under ? (1 - this.holdV).toFixed(3) : '';
       const ko = clamp01(k);
       const ox = CX + Math.cos(th) * RX, oy = CY + Math.sin(th) * RY;
       const bob = Math.sin(t * 1.6 + l.ph) * 12 * (1 - ko) + Math.sin(t * 1.3 + l.ph) * 14 * ko;
       const x = l.hx + (ox - l.hx) * k, y = l.hy + (oy - l.hy) * k + bob - hop * ko;
       const depth = (Math.sin(th) + 1) / 2;                       // 0 = top (far), 1 = bottom (near)
       const s = 1 + k * (0.36 * depth - 0.2);                     // on the ring: far 0.8 → near 1.16
+      const fade = PHONE_L.matches && k > 0 ? clamp01(playGap(x, y, l.w * s / 2, l.h * s / 2) / FADE) : 1;
+      l.el.style.opacity = l.under ? ((1 - this.holdV) * fade).toFixed(3) : fade < 1 ? fade.toFixed(3) : '';
       const rot = Math.sin(t * 1.2 + l.ph) * 6 * (1 - ko) + ko * (TILT[i]! + 5 * Math.sin(t * 0.7 + l.ph));
       l.el.style.transform = `translate(${x - l.w / 2}px, ${y - l.h / 2}px) perspective(${PERSP}px) rotate(${rot}deg) rotateY(${turn}deg) scale(${s})`;
       const wantFront = k < 0.5 || Math.sin(th) > -0.15;
       if (wantFront !== l.front) { (wantFront ? front : back).appendChild(l.el); l.front = wantFront; }
-      if (k > 0.3 && Math.random() < 0.3) this.fx.trail(x + (Math.random() - 0.5) * l.w * 0.4, y + l.h * 0.15, TRAIL[Math.floor(Math.random() * TRAIL.length)]);
+      if (k > 0.3 && fade > 0.5 && Math.random() < 0.3) this.fx.trail(x + (Math.random() - 0.5) * l.w * 0.4, y + l.h * 0.15, TRAIL[Math.floor(Math.random() * TRAIL.length)]);
       this.marks(l, u, t);
     });
   }

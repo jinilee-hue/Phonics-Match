@@ -556,11 +556,11 @@ img { -webkit-user-drag: none; }
   box-shadow: 0 14px 22px rgba(105, 70, 70, .22), inset 0 -10px 0 var(--dy-rim), inset 0 8px 10px rgba(255, 255, 255, .55); }
 #shopClose svg { stroke: var(--dy-ink); filter: drop-shadow(0 -2px 0 rgba(255, 255, 255, .5)) drop-shadow(0 3px 2px var(--dy-sh)); }
 
-/* misc */
-.rotate-hint { position: fixed; inset: 0; display: none; place-items: center; background: rgba(40, 30, 60, .55); z-index: 50; }
-.rotate-hint svg { width: 30vw; height: 30vw; fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; animation: rot 2s ease-in-out infinite; }
+/* misc — the earlier rotate hint stays for tablets / narrow PC windows; phones get .rotate-hint (end of file) */
+.rotate-old { position: fixed; inset: 0; display: none; place-items: center; background: rgba(40, 30, 60, .55); z-index: 50; }
+.rotate-old svg { width: 30vw; height: 30vw; fill: none; stroke: #fff; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; animation: rot 2s ease-in-out infinite; }
 @keyframes rot { 50% { transform: rotate(-90deg); } }
-@media (orientation: portrait) and (max-aspect-ratio: 4/5) { .rotate-hint { display: grid; } }
+@media (orientation: portrait) and (max-aspect-ratio: 4/5) { .rotate-old { display: grid; } }
 .loading { position: fixed; inset: 0; display: grid; place-items: center; background: #bfe6f6; z-index: 60; transition: opacity .4s; }
 .loading i { width: 90px; height: 90px; border-radius: 50%; border: 12px solid rgba(255, 255, 255, .5); border-top-color: #f2558c; animation: spin .8s linear infinite; }
 .loading.done { opacity: 0; pointer-events: none; }
@@ -593,3 +593,56 @@ img { -webkit-user-drag: none; }
    동그랗게 말고 라운드박스형태로 수정해"); main.ts clips the flag art to the same box (rx 6 of 24) */
 .lang-btn .flag svg, .seg button svg { border-radius: 25%; }
 .sq-btn.lang-btn .knob { border-radius: 30%; }
+
+/* ── phones held sideways (2026-11-26): every control ≥ 40 screen px (top bars 42, Play / Next / the mic 52), the words a
+   child reads ≥ 12 px, the edge HUD inside the notch's safe area. Tablets and PCs never match this query (pointer: fine,
+   or taller than 500 px), so nothing changes there. Sizes are screen px through --fit-s (stage.ts sets the stage scale S
+   on phones only): n screen px = n px / S in design px. Zoom / scale keep every button's own look, only bigger. */
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  /* top bars: 42 px buttons, 8 px from the top and the sides (+ the safe area) */
+  .title-bar, .game-bar { zoom: calc(42 / 150 / var(--fit-s, .25)); top: calc(8px * 150 / 42);
+    right: calc((8px + env(safe-area-inset-right, 0px)) * 150 / 42); }
+  .title-bar.left { right: auto; left: calc((8px + env(safe-area-inset-left, 0px)) * 150 / 42); }
+  /* the logo and the left column keep their 44 from the left edge, plus the safe area */
+  .hud-logo { left: calc(44px + env(safe-area-inset-left, 0px) / var(--fit-s, .25)); }
+  /* the left column (coins · dress up · mission) grows until the dress-up box is 44 px and the card's words are ≥ 12 px;
+     it centres in the room under the logo (a 3-goal mission would reach the logo centred on the window) */
+  .lcol { left: calc(44px + env(safe-area-inset-left, 0px) / var(--fit-s, .25)); top: calc((210px + var(--win-h, 1536px)) / 2);
+    transform-origin: 0 50%; transform: translateY(-50%) scale(calc(44 / 150 / var(--fit-s, .25))); }
+  .mcard .goal:not(.done) .gn { font-size: 44px; }
+  /* the title's round dress-up on the tutor, the theme card's ✕ and the dress room's ✕: 44 px round their own centres */
+  .dress-btn, .themes .round-btn.close, #shopClose { scale: calc(44 / 150 / var(--fit-s, .25)); }
+  /* the dress room 10 px to the left, so its bigger ✕ stays clear of the (dimmed) sound button on narrower phones */
+  .shop-card { translate: calc(-10px / var(--fit-s, .25)) 0; }
+  /* the theme card's Play: 52 px tall */
+  .themes .th-go { zoom: calc(52 / 150 / var(--fit-s, .25)); }
+  /* the say turn: the jump button 42 px, its centre still on the bubble's top edge (129 in from its right); the mic 52 px
+     just off the bubble's bottom-right corner, right of the tutor's cap, touching neither (on the board's bottom edge,
+     this big, it covered the bottom row's tiles) */
+  #sayCard .sc-skip { zoom: calc(42 / 118 / var(--fit-s, .25)); top: -59px; right: calc(129px * 118 / 42 * var(--fit-s, .25) - 59px); }
+  #sayCard .sc-mic { width: calc(52px / var(--fit-s, .25)); height: calc(52px / var(--fit-s, .25));
+    right: calc(-46px / var(--fit-s, .25)); top: calc(330px + 2px / var(--fit-s, .25)); }
+  /* the result card's buttons 52 px tall; the card takes the row's width (it no longer fits the stage's right half) */
+  .result { width: max-content; }
+  .result .pc-btns { zoom: calc(52 / 150 / var(--fit-s, .25)); }
+  /* the how-to demo's SKIP: 44 px tall, its right edge on the exit button's (8 px + the safe area), 10 px up */
+  .skip-btn { zoom: calc(44 / 128 / var(--fit-s, .25));
+    right: calc((8px + env(safe-area-inset-right, 0px)) * 128 / 44 - var(--hud-band, 0px) * var(--fit-s, .25) * 128 / 44);
+    bottom: calc((10px + env(safe-area-inset-bottom, 0px)) * 128 / 44); }
+}
+
+/* phones held upright: the shared rotate hint below takes the earlier one's place */
+@media (orientation: portrait) and (max-width: 500px) and (pointer: coarse) { .rotate-old { display: none; } }
+
+/* rotate hint: phones held upright only (tablets / PCs never match) */
+.rotate-hint { display: none; }
+@media (orientation: portrait) and (max-width: 500px) and (pointer: coarse) {
+  .rotate-hint { --rh-bg: rgba(92, 48, 66, .9);
+    display: flex; position: fixed; inset: 0; z-index: 2147483647; flex-direction: column; align-items: center; justify-content: center;
+    gap: 18px; padding: 24px; background: var(--rh-bg); color: #fff; text-align: center; pointer-events: auto; touch-action: none;
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .rotate-hint svg { width: 112px; height: 112px; display: block; }
+  .rotate-hint .rh-phone { transform-origin: 48px 48px; animation: rhTurn 2s ease-in-out infinite; }
+  .rotate-hint p { margin: 0; font: 800 20px/1.3 var(--font, system-ui), system-ui, sans-serif; letter-spacing: .02em; }
+}
+@keyframes rhTurn { 0%, 18% { transform: rotate(0deg); } 50%, 78% { transform: rotate(90deg); } 100% { transform: rotate(0deg); } }

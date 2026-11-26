@@ -6,6 +6,8 @@
 // by --hud-grow (≤ HUD_GROW); beyond that the row stays centred between the logo and the buttons.
 export const DW = 2752, DH = 1536;
 const HUD_GROW = 240;
+/** phones held sideways only (tablets / PCs never match): style.css sizes their controls in screen px through --fit-s */
+const PHONE_L = window.matchMedia('(orientation: landscape) and (max-height: 500px) and (pointer: coarse)');
 export let S = 1;
 const listeners: (() => void)[] = [];
 export const onFit = (f: () => void) => { listeners.push(f); };
@@ -23,6 +25,7 @@ export function fitStage(stage: HTMLElement, hud: HTMLElement, over: HTMLElement
     document.documentElement.style.setProperty('--hud-grow', `${Math.min(HUD_GROW, band)}px`);
     document.documentElement.style.setProperty('--win-h', `${vh / S}px`);   // the window's height in HUD px (.lcol centres on it)
     hud.style.transform = `translate(${x - band * S}px, 0px) scale(${S})`;
+    if (PHONE_L.matches) document.documentElement.style.setProperty('--fit-s', String(S));   // the stage scale, for the phone rules
     listeners.forEach((f) => f());
   };
   fit();

@@ -156,9 +156,12 @@
       </div>
     </div>
 
-    <div id="rotate" class="rotate-hint" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6.5" y="3" width="11" height="18" rx="2.4" /><path d="M20.6 9.5a8.4 8.4 0 0 1-2.4 8" /><path d="M20.9 15.2l-2.6 2.6-1.4-3.4" /></svg></div>
+    <div id="rotate" class="rotate-old" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="6.5" y="3" width="11" height="18" rx="2.4" /><path d="M20.6 9.5a8.4 8.4 0 0 1-2.4 8" /><path d="M20.9 15.2l-2.6 2.6-1.4-3.4" /></svg></div>
     <div id="loading" class="loading"><i></i></div>
   </div>
+
+  <!-- phones held upright: ask for landscape (CSS shows it only under the portrait-phone query) -->
+  <div class="rotate-hint" aria-live="polite"><svg viewBox="0 0 96 96" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><g class="rh-phone"><rect x="34" y="22" width="28" height="52" rx="5.5"/><path d="M44 28.5h8"/></g><path d="M54.3 12.5A36 36 0 0 1 81.8 35.7"/><path d="M74.7 30.8 81.8 35.7 84.1 27.4"/></g></svg><p>Turn your phone sideways</p></div>
 
   <script type="module" src="./src/main.ts"></script>
 </body>
