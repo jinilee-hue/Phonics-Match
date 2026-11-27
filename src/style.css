@@ -599,36 +599,52 @@ img { -webkit-user-drag: none; }
    or taller than 500 px), so nothing changes there. Sizes are screen px through --fit-s (stage.ts sets the stage scale S
    on phones only): n screen px = n px / S in design px. Zoom / scale keep every button's own look, only bigger. */
 @media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
-  /* top bars: 42 px buttons, 8 px from the top and the sides (+ the safe area) */
-  .title-bar, .game-bar { zoom: calc(42 / 150 / var(--fit-s, .25)); top: calc(8px * 150 / 42);
-    right: calc((8px + env(safe-area-inset-right, 0px)) * 150 / 42); }
-  .title-bar.left { right: auto; left: calc((8px + env(safe-area-inset-left, 0px)) * 150 / 42); }
-  /* the logo and the left column keep their 44 from the left edge, plus the safe area */
-  .hud-logo { left: calc(44px + env(safe-area-inset-left, 0px) / var(--fit-s, .25)); }
+  /* top bars: 42 px buttons 10 px apart, 12 px from the top and the sides (+ the safe areas: nothing under the notch or
+     in the screen's round corners) */
+  .title-bar, .game-bar { zoom: calc(42 / 150 / var(--fit-s, .25)); top: calc((12px + env(safe-area-inset-top, 0px)) * 150 / 42);
+    right: calc((12px + env(safe-area-inset-right, 0px)) * 150 / 42); gap: calc(10px * 150 / 42); }
+  .title-bar.left { right: auto; left: calc((12px + env(safe-area-inset-left, 0px)) * 150 / 42); }
+  /* the logo and the left column 12 px from the left (+ the safe area), the logo 12 px from the top */
+  .hud-logo { left: calc((12px + env(safe-area-inset-left, 0px)) / var(--fit-s, .25)); top: calc((12px + env(safe-area-inset-top, 0px)) / var(--fit-s, .25)); }
   /* the left column (coins · dress up · mission) grows until the dress-up box is 44 px and the card's words are ≥ 12 px;
      it centres in the room under the logo (a 3-goal mission would reach the logo centred on the window) */
-  .lcol { left: calc(44px + env(safe-area-inset-left, 0px) / var(--fit-s, .25)); top: calc((210px + var(--win-h, 1536px)) / 2);
+  .lcol { left: calc((12px + env(safe-area-inset-left, 0px)) / var(--fit-s, .25)); top: calc((210px + var(--win-h, 1536px)) / 2);
     transform-origin: 0 50%; transform: translateY(-50%) scale(calc(44 / 150 / var(--fit-s, .25))); }
   .mcard .goal:not(.done) .gn { font-size: 44px; }
   /* the title's round dress-up on the tutor, the theme card's ✕ and the dress room's ✕: 44 px round their own centres */
   .dress-btn, .themes .round-btn.close, #shopClose { scale: calc(44 / 150 / var(--fit-s, .25)); }
-  /* the dress room 10 px to the left, so its bigger ✕ stays clear of the (dimmed) sound button on narrower phones */
-  .shop-card { translate: calc(-10px / var(--fit-s, .25)) 0; }
-  /* the theme card's Play: 52 px tall */
-  .themes .th-go { zoom: calc(52 / 150 / var(--fit-s, .25)); }
-  /* the say turn: the jump button 42 px, its centre still on the bubble's top edge (129 in from its right); the mic 52 px
-     just off the bubble's bottom-right corner, right of the tutor's cap, touching neither (on the board's bottom edge,
-     this big, it covered the bottom row's tiles) */
-  #sayCard .sc-skip { zoom: calc(42 / 118 / var(--fit-s, .25)); top: -59px; right: calc(129px * 118 / 42 * var(--fit-s, .25) - 59px); }
-  #sayCard .sc-mic { width: calc(52px / var(--fit-s, .25)); height: calc(52px / var(--fit-s, .25));
-    right: calc(-46px / var(--fit-s, .25)); top: calc(330px + 2px / var(--fit-s, .25)); }
-  /* the result card's buttons 52 px tall; the card takes the row's width (it no longer fits the stage's right half) */
+  /* the dress room 22 px to the left, so its ✕ stays ≥ 8 px from the (dimmed) sound button on narrower phones */
+  .shop-card { translate: calc(-22px / var(--fit-s, .25)) 0; }
+  /* the how-to demo: the raised logo 12 px from the top edge (it went to 4) */
+  .title.demo-on .logo { translate: 0 calc(-291px + 8px / var(--fit-s, .25)); }
+  /* round 2 (5-year-olds' fingers): the theme pictures 88 px, its Play 64 px tall */
+  .themes .th-pic { width: calc(88px / var(--fit-s, .25)); height: calc(88px / var(--fit-s, .25)); }
+  .themes { padding-left: 36px; padding-right: 36px; }   /* (narrower sides: its ✕ stays ≥ 8 px from the EN/한 toggle) */
+  .themes .th-go { zoom: calc(64 / 150 / var(--fit-s, .25)); }
+  /* the title's PLAY ≥ 160 px wide (it was 157 on an iPhone 13; title.ts fades the swirling letters off this size) */
+  .play-btn { scale: 1.03; }
+  /* the game: the board as big as the height allows, beside the left column; the tutor, the say bubble and the mic in
+     the room right of it (stage.ts phoneLayout sets the --pm-* numbers; board.ts maps the effects onto the moved board) */
+  .board { scale: var(--pm-bk, 1); translate: var(--pm-bx, 0px) var(--pm-by, 0px); }
+  /* the bubble centred on the tutor's head; a long word slides it right (clear of the board, never past the right edge) —
+     the tail and the mic stay where they were (--pm-shift = how far the bubble's left edge is from the head, design px) */
+  #sayCard { --pm-shift: min(max(var(--pm-sc-a, -300px), -50%), calc(var(--pm-sc-b, 300px) - 100%));
+    right: auto; left: var(--pm-sc-x, 2400px); top: var(--pm-sc-top, 347px); translate: var(--pm-shift) 0; }
+  #sayCard::after { left: calc(-35px - var(--pm-shift)); }
+  /* the say turn: the jump button 64 px, 129 in from the bubble's right, its centre 14 px above the bubble's top edge (on
+     the edge, this big, it covered the word's top); the mic as big as the room right of the tutor holds (64-88 px),
+     below the bubble, touching neither the tutor nor the tiles, its right edge on the top bar's (12 px + the safe area) */
+  #sayCard .sc-skip { zoom: calc(64 / 118 / var(--fit-s, .25)); top: -85px; right: calc(129px * 118 / 64 * var(--fit-s, .25) - 59px); }
+  #sayCard .sc-mic { width: var(--pm-mic, 233px); height: var(--pm-mic, 233px);
+    right: auto; left: calc(var(--pm-mic-dx, 300px) - var(--pm-shift)); top: var(--pm-mic-top, 400px); }
+  /* the result card's buttons 64 px tall, Next ≥ 160 px wide; the card takes the row's width */
   .result { width: max-content; }
-  .result .pc-btns { zoom: calc(52 / 150 / var(--fit-s, .25)); }
-  /* the how-to demo's SKIP: 44 px tall, its right edge on the exit button's (8 px + the safe area), 10 px up */
+  .result .pc-btns { zoom: calc(64 / 150 / var(--fit-s, .25)); }
+  .result .pc-btns .rs-next { min-width: 375px; }
+  /* the how-to demo's SKIP: 44 px tall, its right edge on the exit button's (12 px + the safe area), 14 px up (+ the home bar) */
   .skip-btn { zoom: calc(44 / 128 / var(--fit-s, .25));
-    right: calc((8px + env(safe-area-inset-right, 0px)) * 128 / 44 - var(--hud-band, 0px) * var(--fit-s, .25) * 128 / 44);
-    bottom: calc((10px + env(safe-area-inset-bottom, 0px)) * 128 / 44); }
+    right: calc((12px + env(safe-area-inset-right, 0px)) * 128 / 44 - var(--hud-band, 0px) * var(--fit-s, .25) * 128 / 44);
+    bottom: calc((14px + env(safe-area-inset-bottom, 0px)) * 128 / 44); }
 }
 
 /* phones held upright: the shared rotate hint below takes the earlier one's place */

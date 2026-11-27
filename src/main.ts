@@ -10,7 +10,7 @@ import { coinSrc, Game } from './game/game';
 import { Fx } from './ui/fx';
 import { Hud } from './ui/hud';
 import { Shop } from './ui/shop';
-import { fitStage, wait, boxIn } from './ui/stage';
+import { fitStage, wait, boxIn, PB, onFit, S } from './ui/stage';
 import { Title } from './ui/title';
 import { titleControls } from './ui/corner';
 import { Demo } from './ui/demo';
@@ -67,8 +67,32 @@ async function boot() {
   // still loading (it waits for it then; any voice used to pass meanwhile)
   setTimeout(() => sttPreload(), 1500);
 
-  const place = (where: keyof typeof SPOT, instant = false) => { const [x, y, s] = SPOT[where]; tutor.place(x, y, s, instant); };
+  // a phone held sideways (stage.ts PB): the game spot comes from the phone layout and follows it when the window turns;
+  // turned upright (or a tablet / PC) it's the old spot. Nothing of this runs off phones.
+  const place = (where: keyof typeof SPOT, instant = false) => { const [x, y, s] = where === 'game' && PB.on ? PB.tutor : SPOT[where]; tutor.place(x, y, s, instant); };
   place('title', true);
+  // …and a word too long for the room between the board and the right edge (watermelon on an iPhone) gets a smaller font,
+  // so the bubble never reaches the board (watched only on a phone; the inline size goes when it isn't one)
+  const sayCard = $('#sayCard') as HTMLElement, sayWord = sayCard.querySelector('.sc-word') as HTMLElement;
+  let wordObs: MutationObserver | null = null;
+  const fitWord = () => {
+    sayWord.style.removeProperty('font-size');
+    if (!PB.on || sayCard.hidden) return;
+    const over = sayCard.offsetWidth - PB.scRoom / S, ww = sayWord.offsetWidth;   // design px (offsetWidth: no animation scale)
+    if (over > 0 && ww > 0) sayWord.style.fontSize = `${Math.max(80, (132 * (ww - over)) / ww).toFixed(1)}px`;
+  };
+  let phoneSpot = PB.on;                                             // (the layout the page started with)
+  const phoneFit = () => {
+    if (!PB.on && !phoneSpot) return;                                // (tablets / PCs: never anything here)
+    phoneSpot = PB.on;
+    if (PB.on && !wordObs) {
+      wordObs = new MutationObserver(fitWord);
+      wordObs.observe(sayCard, { attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true, characterData: true });
+    }
+    fitWord();
+    if (app.dataset.screen === 'game') place('game', true);
+  };
+  phoneFit(); onFit(phoneFit);
 
   const seed = params.has('seed') ? Number(params.get('seed')) : undefined;
   const game = new Game(hud, fx, tutor, {

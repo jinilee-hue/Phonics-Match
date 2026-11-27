@@ -2,6 +2,7 @@
 // Positions are design px inside .field (1348×1098, the mockup's inner board); a cell is FW/W × FH/H.
 import { ANIMALS } from '../data/animals';
 import { Grid, type Fall } from './grid';
+import { PB } from '../ui/stage';
 
 export const BW = 5, BH = 4;
 const FW = 1348, FH = 1098;
@@ -10,6 +11,10 @@ const PIECE = 270;                     // the art's own scale: the mockup's anim
 const SLOT_W = 246, SLOT_H = 250;
 /** field origin in stage px (board 642,161 + field 58,58 — style.css .board) */
 export const FIELD_X = 700, FIELD_Y = 219;
+
+/** a board point (stage px) where it shows: on a phone the board is scaled about its centre (1374, 768) and moved
+ *  (stage.ts PB, style.css .board); elsewhere unchanged */
+const onBoard = (x: number, y: number) => (PB.on ? { x: 1374 + (x - 1374) * PB.k + PB.bx, y: 768 + (y - 768) * PB.k + PB.by } : { x, y });
 
 const base = new URL('./', location.href).href;
 export const animalSrc = (k: number) => `${base}${ANIMALS[k].img}`;
@@ -34,7 +39,9 @@ export class Board {
   get pieces() { return this.root.querySelector('.pieces') as HTMLElement; }
   center(i: number) { const x = i % BW, y = Math.floor(i / BW); return { x: CW * (x + 0.5), y: CH * (y + 0.5) }; }
   /** a cell's centre in stage px */
-  stageXY(i: number) { const c = this.center(i); return { x: FIELD_X + c.x, y: FIELD_Y + c.y }; }
+  stageXY(i: number) { const c = this.center(i); return onBoard(FIELD_X + c.x, FIELD_Y + c.y); }
+  /** the field's centre in stage px */
+  stageMid() { return onBoard(FIELD_X + (CW * BW) / 2, FIELD_Y + (CH * BH) / 2); }
   private tf(x: number, y: number, s = 1) { return `translate(${x - PIECE / 2}px, ${y - PIECE / 2}px) scale(${s})`; }
   private make(k: number) {
     const d = document.createElement('div'); d.className = 'pc';

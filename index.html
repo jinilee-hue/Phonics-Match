@@ -7,6 +7,10 @@
   <title>Phonics Match</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='4' y='4' width='56' height='56' rx='16' fill='%23f7e3da'/%3E%3Ctext x='32' y='45' font-family='Arial' font-weight='900' font-size='36' text-anchor='middle' fill='%23f2558c'%3Em%3C/text%3E%3C/svg%3E" />
   <link rel="preload" href="./art/bg_title.webp" as="image" />
+<!-- the "turn your phone sideways" hint is for phones only: an iPad's narrow Split View / Slide Over pane looks like an
+     upright phone to the CSS query, so a screen whose short side is over 500 px (every tablet) never shows it -->
+<style>.not-phone .rotate-hint { display: none !important; }</style>
+<script>try { if (Math.min(screen.width, screen.height) > 500) document.documentElement.classList.add('not-phone'); } catch (e) { /* no screen info */ }</script>
 </head>
 <body>
   <div id="app" class="app" data-screen="title">

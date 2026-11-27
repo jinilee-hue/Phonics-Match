@@ -62,7 +62,7 @@ const UNDER_DEMO = new Set(['l_t_bot', 'l_p_bot']);
  *  letter fades out as its box nears PLAY's pill (style.css .play-btn: 1029, 876, 697 × 302, pulsing to 1.045) and is
  *  gone before it would touch it; at rest (k 0) nothing changes */
 const PHONE_L = window.matchMedia('(orientation: landscape) and (max-height: 500px) and (pointer: coarse)');
-const PILL = { cx: 1377.5, cy: 1027, half: (697 / 2 - 151) * 1.045, r: 151 * 1.045 };
+const PILL = { cx: 1377.5, cy: 1027, half: (697 / 2 - 151) * 1.045 * 1.03, r: 151 * 1.045 * 1.03 };   // (phones: scale 1.03, style.css)
 const FADE = 36;                                                   // design px of gap over which a letter fades in
 /** gap (design px) between a letter's box (centre x, y, half sizes) and PLAY's pill; ≤ 0 = touching */
 const playGap = (x: number, y: number, hw: number, hh: number) => Math.hypot(

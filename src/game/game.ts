@@ -7,7 +7,7 @@ import { sfx } from '../core/audio';
 import { Listener, type Heard } from '../core/listen';
 import { say, stopSpeech, onLineTimes, wait } from '../core/speech';
 import { addCoins, commit, save } from '../core/store';
-import { Board, BW, BH, CW, CH, FIELD_X, FIELD_Y, animalSrc } from './board';
+import { Board, BW, BH, FIELD_X, FIELD_Y, animalSrc } from './board';
 import { Grid, seeded } from './grid';
 import type { Fx } from '../ui/fx';
 import type { Hud, Goal } from '../ui/hud';
@@ -172,7 +172,7 @@ export class Game {
       onFirst(main.kind, wave);
       sfx('pop', wave - 1);
       if (wave >= 2) {
-        this.fx.combo(wave, FIELD_X + (CW * BW) / 2, FIELD_Y + (CH * BH) / 2); sfx('combo', wave);   // on the board
+        { const m = this.board.stageMid(); this.fx.combo(wave, m.x, m.y); } sfx('combo', wave);   // on the board
         this.tutor.act('cheer');
       }
       const all: number[] = [];
